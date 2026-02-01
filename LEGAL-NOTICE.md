@@ -104,3 +104,20 @@ This project and its licensing are governed by the laws of **Victoria, Australia
 For commercial licensing, rights enquiries, or legal correspondence:
 
 **Email:** commutecompute.licensing@gmail.com
+
+---
+
+## 9. Related Documents
+
+This notice is supplementary to the comprehensive intellectual property documentation.
+
+For detailed information including:
+- Full trademark registry (CCDash™, SmartCommute™, CCFirm™, CC LiveDash™)
+- File attribution audit
+- Third-party content exclusions
+- Firmware naming conventions
+- Metro Tunnel third-party disclaimer
+
+See: `LEGAL.md`
+
+All documents in this repository form part of the complete legal framework and should be read together.
