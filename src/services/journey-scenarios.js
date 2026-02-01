@@ -491,6 +491,152 @@ const scenarios = {
         status: StepStatus.NORMAL
       }
     ]
+  },
+
+  // ---------------------------------------------------------------------------
+  // SCENARIO: Rush Hour - No Coffee Time
+  // ---------------------------------------------------------------------------
+  'rush-no-coffee': {
+    origin: 'HOME',
+    destination: 'WORK',
+    currentTime: '8:45',
+    ampm: 'AM',
+    dayOfWeek: 'Wednesday',
+    date: '29 January',
+    status: JourneyStatus.LEAVE_NOW,
+    arrivalTime: '9:28',
+    totalDuration: 43,
+    isHomebound: false,
+    weather: { temp: 24, condition: 'Sunny', umbrella: false },
+    steps: [
+      {
+        type: StepType.WALK,
+        title: 'Walk to Station',
+        subtitle: 'From home • Platform 3',
+        duration: 6,
+        status: StepStatus.NORMAL
+      },
+      {
+        type: StepType.COFFEE,
+        title: 'Coffee Stop',
+        subtitle: '✗ NO TIME — Catch this train',
+        duration: null,
+        status: StepStatus.SKIPPED,
+        skipReason: 'Catch this train'
+      },
+      {
+        type: StepType.TRAIN,
+        title: 'Train to Flinders St',
+        subtitle: 'Frankston • Departs in 4 min',
+        duration: 18,
+        status: StepStatus.NORMAL
+      },
+      {
+        type: StepType.WALK,
+        title: 'Walk to Office',
+        subtitle: 'Station → Work',
+        duration: 12,
+        status: StepStatus.NORMAL
+      }
+    ]
+  },
+
+  // ---------------------------------------------------------------------------
+  // SCENARIO: Meeting Soon - Skip Coffee
+  // ---------------------------------------------------------------------------
+  'meeting-no-coffee': {
+    origin: 'HOME',
+    destination: 'CLIENT OFFICE',
+    currentTime: '9:05',
+    ampm: 'AM',
+    dayOfWeek: 'Thursday',
+    date: '30 January',
+    status: JourneyStatus.DELAY,
+    arrivalTime: '9:55',
+    totalDuration: 50,
+    delayMinutes: 5,
+    isHomebound: false,
+    weather: { temp: 19, condition: 'Cloudy', umbrella: false },
+    steps: [
+      {
+        type: StepType.WALK,
+        title: 'Walk to Tram Stop',
+        subtitle: 'Collins St • Stop 8',
+        duration: 4,
+        status: StepStatus.NORMAL
+      },
+      {
+        type: StepType.COFFEE,
+        title: 'Coffee Stop',
+        subtitle: '✗ SKIP — Meeting at 10am',
+        duration: null,
+        status: StepStatus.SKIPPED,
+        skipReason: 'Meeting at 10am'
+      },
+      {
+        type: StepType.TRAM,
+        title: 'Tram 86 to Docklands',
+        subtitle: 'Route 86 • Next: 3, 8 min',
+        duration: 22,
+        status: StepStatus.NORMAL
+      },
+      {
+        type: StepType.WALK,
+        title: 'Walk to Client Office',
+        subtitle: 'NewQuay Promenade',
+        duration: 8,
+        status: StepStatus.NORMAL
+      }
+    ]
+  },
+
+  // ---------------------------------------------------------------------------
+  // SCENARIO: Late Start - Definitely No Coffee
+  // ---------------------------------------------------------------------------
+  'late-no-coffee': {
+    origin: 'HOME',
+    destination: 'WORK',
+    currentTime: '9:32',
+    ampm: 'AM',
+    dayOfWeek: 'Friday',
+    date: '31 January',
+    status: JourneyStatus.DELAY,
+    arrivalTime: '10:25',
+    totalDuration: 53,
+    delayMinutes: 25,
+    isHomebound: false,
+    weather: { temp: 28, condition: 'Hot', umbrella: false },
+    steps: [
+      {
+        type: StepType.WALK,
+        title: 'Rush to Station',
+        subtitle: 'From home • Hurry!',
+        duration: 5,
+        status: StepStatus.URGENT
+      },
+      {
+        type: StepType.COFFEE,
+        title: 'Coffee Stop',
+        subtitle: '✗ SKIP — Already 30min late!',
+        duration: null,
+        status: StepStatus.SKIPPED,
+        skipReason: 'Already late'
+      },
+      {
+        type: StepType.TRAIN,
+        title: 'Train to Southern Cross',
+        subtitle: 'Sunbury • via Metro Tunnel',
+        duration: 25,
+        status: StepStatus.NORMAL
+      },
+      {
+        type: StepType.WALK,
+        title: 'Walk to Office',
+        subtitle: 'Docklands',
+        duration: 15,
+        status: StepStatus.NORMAL
+      }
+    ]
   }
 };
 
