@@ -464,3 +464,32 @@ If Commute Compute helps you catch your train on time, consider supporting conti
   <strong>Built with ☕ in Melbourne</strong><br>
   <sub>Copyright © 2025-2026 Angus Bergman — AGPL v3</sub>
 </p>
+
+---
+
+## Legal & Ownership Notice
+
+CommuteCompute is an **unincorporated software project and trade name**
+created, authored, and owned by **Angus Bergman (individual)**.
+
+CommuteCompute is **not** a registered company or separate legal entity
+as of 1 February 2026.
+
+All intellectual property rights vest exclusively in the author.
+
+## Trademark Notice
+
+CommuteCompute™, SmartCommute™, and associated marks are **claimed but
+currently unregistered trademarks**.
+
+## Licensing Summary
+
+This project uses a **dual-licensing model**:
+
+- Open-source components are licensed under **AGPL v3**
+- Commercial and enterprise use requires a separate commercial license
+
+See:
+- LICENSE / LICENSE-AGPL-3.0.md
+- LICENSING.md
+- LICENCE-COMMERCIAL.md
