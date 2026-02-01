@@ -189,7 +189,6 @@ export const METRO_TUNNEL_STATIONS = {
  */
 export const METRO_TUNNEL_LINES = [
   'sunbury',      // Sunbury ↔ Cranbourne/Pakenham via Metro Tunnel
-  'upfield',      // Upfield ↔ Pakenham/Cranbourne
   'pakenham',     // Pakenham ↔ Sunbury via Metro Tunnel
   'cranbourne'    // Cranbourne ↔ Sunbury via Metro Tunnel
 ];
@@ -245,13 +244,11 @@ export const METRO_TUNNEL_DISCONTINUED_SERVICES = {
   southernCross: {
     stopId: '22180',
     lostLines: ['sunbury', 'pakenham', 'cranbourne'],
-    stillServedBy: ['werribee', 'williamstown', 'vline'],
+    stillServedBy: ['werribee', 'williamstown', 'vline', 'craigieburn', 'upfield'],
     alternativeFor: {
       pakenham: 'Walk to Flinders St or use City Loop to transfer',
       sunbury: 'Walk to Flinders St or use City Loop to transfer',
       cranbourne: 'Walk to Flinders St or use City Loop to transfer',
-      craigieburn: 'Walk to Flinders St or use City Loop to transfer',
-      upfield: 'Walk to Flinders St or use City Loop to transfer'
     },
     nearestMetroTunnel: 'arden',
     walkMinutes: 12  // Walk to Arden station
@@ -259,7 +256,7 @@ export const METRO_TUNNEL_DISCONTINUED_SERVICES = {
   flagstaff: {
     stopId: '22186',
     lostLines: ['sunbury', 'pakenham', 'cranbourne'],
-    stillServedBy: ['belgrave', 'lilydale', 'alamein', 'glenWaverley', 'hurstbridge', 'mernda', 'frankston', 'sandringham', 'werribee', 'williamstown'],
+    stillServedBy: ['belgrave', 'lilydale', 'alamein', 'glenWaverley', 'hurstbridge', 'mernda', 'frankston', 'sandringham', 'werribee', 'williamstown', 'craigieburn', 'upfield'],
     alternativeFor: {
       pakenham: 'Use City Loop to Flinders St, change to Metro Tunnel',
       sunbury: 'Walk to State Library (5 min)',
@@ -273,7 +270,7 @@ export const METRO_TUNNEL_DISCONTINUED_SERVICES = {
   melbourneCentral: {
     stopId: '22182',
     lostLines: ['sunbury', 'pakenham', 'cranbourne'],
-    stillServedBy: ['belgrave', 'lilydale', 'alamein', 'glenWaverley', 'hurstbridge', 'mernda', 'frankston', 'sandringham', 'werribee', 'williamstown'],
+    stillServedBy: ['belgrave', 'lilydale', 'alamein', 'glenWaverley', 'hurstbridge', 'mernda', 'frankston', 'sandringham', 'werribee', 'williamstown', 'craigieburn', 'upfield'],
     alternativeFor: {
       pakenham: 'Walk to State Library (3 min) - same area, different entrance',
       sunbury: 'Walk to State Library (3 min) - same area, different entrance',
@@ -287,7 +284,7 @@ export const METRO_TUNNEL_DISCONTINUED_SERVICES = {
   parliament: {
     stopId: '22181',
     lostLines: ['sunbury', 'pakenham', 'cranbourne'],
-    stillServedBy: ['belgrave', 'lilydale', 'alamein', 'glenWaverley', 'hurstbridge', 'mernda', 'frankston', 'sandringham', 'werribee', 'williamstown'],
+    stillServedBy: ['belgrave', 'lilydale', 'alamein', 'glenWaverley', 'hurstbridge', 'mernda', 'frankston', 'sandringham', 'werribee', 'williamstown', 'craigieburn', 'upfield'],
     alternativeFor: {
       pakenham: 'Walk to Town Hall (8 min) or Flinders St (5 min)',
       sunbury: 'Walk to Town Hall (8 min) or State Library (10 min)',
