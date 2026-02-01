@@ -1,0 +1,39 @@
+# Commute Compute - Dual Licence
+
+Commute Compute is available under two licences:
+
+## 1. AGPL v3 (Open Source)
+
+For open-source use, Commute Compute is licensed under the GNU Affero General Public Licence v3.0. See [LICENCE-AGPL-3.0](LICENCE-AGPL-3.0) for the full text.
+
+**You can freely:**
+- Use, modify, and distribute the software
+- Use it commercially
+
+**Requirements:**
+- Preserve copyright notices
+- Disclose source code of modifications
+- If you run a modified version as a network service, you must make the source available to users
+
+## 2. Commercial Licence
+
+For organisations that cannot comply with AGPL's open-source requirements (e.g., proprietary products, closed-source SaaS), a commercial licence is available.
+
+**Contact:** commutecompute.licensing@gmail.com
+
+---
+
+## Which licence applies to me?
+
+| Use Case | Licence |
+|----------|----------|
+| Personal/hobby projects | AGPL ✅ |
+| Academic/research | AGPL ✅ |
+| Open-source projects | AGPL ✅ |
+| Internal company use (source shared) | AGPL ✅ |
+| Closed-source products | Commercial |
+| Proprietary SaaS | Commercial |
+
+---
+
+© 2025-2026 Angus Bergman. All rights reserved.

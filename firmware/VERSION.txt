@@ -1,0 +1,25 @@
+# Commute Compute Firmware Version
+# Copyright (c) 2026 Angus Bergman - CC BY-NC 4.0
+
+VERSION=7.1.0
+BUILD_DATE=2026-02-01
+STATUS=PRODUCTION-LOCKED
+COMMIT=911a5ca
+
+# v7.1.0 Changes:
+# - Redis Cloud KV support via ioredis
+# - Fixed Transit API key validation (KeyId header)
+# - Progressive setup wizard saving
+# - Zero-Config KV storage compliance
+# - Full system audit passed
+
+# Anti-Brick Compliance: 12/12 (100%)
+# - Watchdog timer: 45s
+# - No blocking in setup()
+# - State machine architecture
+# - Memory-safe zone processing
+# - Exponential backoff on errors
+
+COMPATIBLE_DEVICES=TRMNL_OG,TRMNL_MINI
+DEFAULT_SERVER=https://your-server.vercel.app
+LOCKED=true

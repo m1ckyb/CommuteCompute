@@ -1,0 +1,90 @@
+{
+  "version": 2,
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "public/**,src/**,data/**,config/**,fonts/**"
+    },
+    "api/screen.js": {
+      "includeFiles": "src/**,config/**,fonts/**"
+    },
+    "api/livedash.js": {
+      "includeFiles": "src/**,config/**,fonts/**"
+    },
+    "api/zones.js": {
+      "includeFiles": "src/**,config/**,fonts/**"
+    },
+    "api/zonedata.js": {
+      "includeFiles": "src/**,config/**"
+    },
+    "api/zone/[id].js": {
+      "includeFiles": "src/**,config/**,fonts/**"
+    },
+    "api/fullscreen.js": {
+      "includeFiles": "src/**,config/**,fonts/**"
+    },
+    "api/zones-tiered.js": {
+      "includeFiles": "src/**,config/**,fonts/**"
+    },
+    "api/health.js": {
+      "includeFiles": "src/**,config/**"
+    },
+    "api/status.js": {
+      "includeFiles": "src/**,config/**"
+    },
+    "api/version.js": {
+      "includeFiles": "config/**"
+    },
+    "api/admin/setup-complete.js": {
+      "includeFiles": "src/**,config/**"
+    },
+    "api/admin/preferences.js": {
+      "includeFiles": "src/**,config/**"
+    },
+    "api/admin/generate-webhook.js": {
+      "includeFiles": "src/**,config/**"
+    }
+  },
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/setup-wizard.html",
+      "permanent": false
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin.html",
+      "permanent": false
+    },
+    {
+      "source": "/setup",
+      "destination": "/setup-wizard.html",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/health",
+      "destination": "/api/health"
+    },
+    {
+      "source": "/api/screen",
+      "destination": "/api/screen"
+    },
+    {
+      "source": "/api/livedash",
+      "destination": "/api/livedash"
+    },
+    {
+      "source": "/api/zones",
+      "destination": "/api/zones"
+    },
+    {
+      "source": "/api/zonedata",
+      "destination": "/api/zonedata"
+    },
+    {
+      "source": "/api/zone/:id",
+      "destination": "/api/zone/[id]"
+    }
+  ]
+}

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Commute Compute - Kindle 11</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; background: #1e293b; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .device-frame { background: #333; padding: 30px 20px; border-radius: 20px; }
+        .device-label { color: #888; font-size: 12px; text-align: center; margin-bottom: 15px; }
+        #display { width: 536px; height: 724px; background: #f5f5f0; border: 2px solid #1a1a1a; position: relative; overflow: hidden; font-family: "Courier New", monospace; }
+        .text { position: absolute; color: #1a1a1a; }
+        .text-w { position: absolute; color: #f5f5f0; }
+        .mega { font-size: 72px; font-weight: bold; }
+        .huge { font-size: 42px; font-weight: bold; }
+        .xlarge { font-size: 28px; font-weight: bold; }
+        .large { font-size: 18px; font-weight: bold; }
+        .medium { font-size: 14px; font-weight: bold; }
+        .small { font-size: 11px; }
+        .xs { font-size: 9px; }
+        .line { position: absolute; background: #1a1a1a; }
+        .box { position: absolute; border: 2px solid #1a1a1a; }
+        .fill { position: absolute; background: #1a1a1a; }
+        .info { color: #888; text-align: center; margin-top: 15px; font-size: 10px; }
+    </style>
+</head>
+<body>
+    <div class="device-frame">
+        <div class="device-label">Kindle 11 (536 x 724)</div>
+        <div id="display">
+            
+            <!-- HOME ADDRESS -->
+            <div class="text xs" style="left: 20px; top: 5px;">1 Clara St, South Yarra</div>
+            
+            <!-- === BIG TIME & WEATHER === -->
+            <div class="text mega" style="left: 20px; top: 18px;">07:32</div>
+            <div class="text large" style="left: 20px; top: 92px;">Tuesday 28 Jan</div>
+            <div class="text huge" style="right: 20px; top: 24px;">17°C</div>
+            <div class="text large" style="right: 20px; top: 72px;">Clear</div>
+            
+            <!-- UMBRELLA STATUS -->
+            <div class="box" style="right: 20px; top: 94px; width: 120px; height: 18px;"></div>
+            <div class="text xs" style="right: 32px; top: 97px;">NO UMBRELLA NEEDED</div>
+            
+            <div class="line" style="left: 0; top: 118px; width: 536px; height: 2px;"></div>
+            
+            <!-- === LEAVE NOW === -->
+            <div class="fill" style="left: 20px; top: 125px; width: 496px; height: 42px;"></div>
+            <div class="text-w medium" style="left: 35px; top: 133px;">IF YOU LEAVE NOW → Arrive 08:27</div>
+            <div class="text-w medium" style="right: 35px; top: 133px;">55 min | 4 stops</div>
+            
+            <!-- STATUS -->
+            <div class="box" style="left: 20px; top: 175px; width: 496px; height: 20px;"></div>
+            <div class="text xs" style="left: 180px; top: 179px;">ALL SERVICES ON TIME</div>
+            
+            <!-- === JOURNEY === -->
+            <div class="line" style="left: 28px; top: 210px; width: 4px; height: 295px;"></div>
+            
+            <!-- LEG 1: TRAM -->
+            <div class="fill" style="left: 20px; top: 205px; width: 20px; height: 20px;"></div>
+            <div class="box" style="left: 50px; top: 200px; width: 466px; height: 58px;"></div>
+            <div class="fill" style="left: 50px; top: 200px; width: 60px; height: 58px;"></div>
+            <div class="text-w small" style="left: 58px; top: 222px;">TRAM</div>
+            <div class="text small" style="left: 120px; top: 205px;">Chapel St → South Yarra</div>
+            <div class="text xs" style="left: 120px; top: 220px;">8 min walk | 2 min ride</div>
+            <div class="text xs" style="left: 120px; top: 235px;">Then: 13 min, 18 min</div>
+            <div class="fill" style="right: 20px; top: 200px; width: 55px; height: 58px;"></div>
+            <div class="text-w xlarge" style="right: 30px; top: 210px;">8</div>
+            <div class="text-w xs" style="right: 32px; top: 240px;">min</div>
+            
+            <!-- LEG 2: TRAIN -->
+            <div class="fill" style="left: 20px; top: 273px; width: 20px; height: 20px;"></div>
+            <div class="box" style="left: 50px; top: 268px; width: 466px; height: 58px;"></div>
+            <div class="fill" style="left: 50px; top: 268px; width: 60px; height: 58px;"></div>
+            <div class="text-w small" style="left: 55px; top: 290px;">TRAIN</div>
+            <div class="text small" style="left: 120px; top: 273px;">South Yarra → Parliament</div>
+            <div class="text xs" style="left: 120px; top: 288px;">3 min wait | 4 min ride</div>
+            <div class="text xs" style="left: 120px; top: 303px;">Then: 23 min, 33 min</div>
+            <div class="fill" style="right: 20px; top: 268px; width: 55px; height: 58px;"></div>
+            <div class="text-w xlarge" style="right: 25px; top: 278px;">13</div>
+            <div class="text-w xs" style="right: 32px; top: 308px;">min</div>
+            
+            <!-- LEG 3: COFFEE -->
+            <div class="fill" style="left: 20px; top: 341px; width: 20px; height: 20px;"></div>
+            <div class="box" style="left: 50px; top: 336px; width: 466px; height: 38px;"></div>
+            <div class="fill" style="left: 50px; top: 336px; width: 60px; height: 38px;"></div>
+            <div class="text-w small" style="left: 52px; top: 348px;">COFFEE</div>
+            <div class="text small" style="left: 120px; top: 343px;">Excello CBD - Spring St</div>
+            <div class="text xs" style="left: 120px; top: 358px;">5 min stop</div>
+            <div class="fill" style="right: 20px; top: 336px; width: 55px; height: 38px;"></div>
+            <div class="text-w small" style="right: 27px; top: 348px;">~20m</div>
+            
+            <!-- LEG 4: TRAM 86 -->
+            <div class="fill" style="left: 20px; top: 389px; width: 20px; height: 20px;"></div>
+            <div class="box" style="left: 50px; top: 384px; width: 466px; height: 58px;"></div>
+            <div class="fill" style="left: 50px; top: 384px; width: 60px; height: 58px;"></div>
+            <div class="text-w small" style="left: 58px; top: 406px;">TRAM</div>
+            <div class="text small" style="left: 120px; top: 389px;">Bourke St → Smith St (86)</div>
+            <div class="text xs" style="left: 120px; top: 404px;">2 min walk | 5 min ride</div>
+            <div class="text xs" style="left: 120px; top: 419px;">Then: 34 min, 40 min</div>
+            <div class="fill" style="right: 20px; top: 384px; width: 55px; height: 58px;"></div>
+            <div class="text-w xlarge" style="right: 25px; top: 394px;">28</div>
+            <div class="text-w xs" style="right: 32px; top: 424px;">min</div>
+            
+            <!-- DESTINATION -->
+            <div class="fill" style="left: 20px; top: 457px; width: 20px; height: 20px;"></div>
+            <div class="fill" style="left: 50px; top: 452px; width: 466px; height: 58px;"></div>
+            <div class="text-w large" style="left: 65px; top: 465px;">SIRCUIT</div>
+            <div class="text-w xs" style="left: 65px; top: 488px;">Smith St, Collingwood</div>
+            <div class="text-w small" style="right: 105px; top: 462px;">ARRIVE</div>
+            <div class="text-w huge" style="right: 20px; top: 468px;">08:27</div>
+            
+            <!-- SUMMARY -->
+            <div class="line" style="left: 20px; top: 525px; width: 496px; height: 2px;"></div>
+            <div class="text xs" style="left: 20px; top: 535px;">33 min early for 09:00 start | Coffee included</div>
+            
+            <!-- SERVICE STATUS -->
+            <div class="line" style="left: 20px; top: 555px; width: 496px; height: 1px;"></div>
+            <div class="text xs" style="left: 20px; top: 563px;">SERVICE STATUS</div>
+            <div class="text xs" style="left: 20px; top: 576px;">Tram 78: Good | Pakenham Line: Good | Tram 86: Good</div>
+            <div class="text xs" style="left: 20px; top: 589px;">Sandringham Line: Minor delays (5 min)</div>
+            
+            <!-- FOOTER -->
+            <div class="line" style="left: 0; top: 670px; width: 536px; height: 2px;"></div>
+            <div class="text xs" style="left: 20px; top: 690px;">Commute Compute</div>
+            <div class="text xs" style="left: 120px; top: 690px;">Updated: 07:32:15</div>
+            <div class="text xs" style="left: 280px; top: 690px;">© 2025 Angus Bergman</div>
+            <div class="text xs" style="right: 20px; top: 690px;">v5.18</div>
+        </div>
+        <div class="info">Final approved design with copyright</div>
+    </div>
+    
+    <!-- Footer -->
+    <footer style="background: #1e293b; border-top: 1px solid rgba(255,255,255,0.1); padding: 20px; margin-top: 30px; text-align: center; font-size: 13px; color: #94a3b8;">
+        <div style="margin-bottom: 12px;">
+            <a href="https://opendata.transport.vic.gov.au" target="_blank" rel="noopener" style="color: #94a3b8;">Transport Victoria OpenData</a> (CC BY 4.0) •
+            <a href="/attribution.html" style="color: #94a3b8;">All Sources</a>
+        </div>
+        <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;">
+            <a href="https://buymeacoffee.com/angusbergman" target="_blank" rel="noopener" style="padding: 6px 12px; background: #FFDD00; color: #000; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 12px;">☕ Coffee</a>
+            <a href="https://github.com/sponsors/angusbergman17-cpu" target="_blank" rel="noopener" style="padding: 6px 12px; background: #db61a2; color: #fff; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 12px;">💖 Sponsor</a>
+            <a href="https://github.com/angusbergman17-cpu/CommuteCompute/issues/new" target="_blank" rel="noopener" style="padding: 6px 12px; background: #6366f1; color: #fff; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 12px;">📝 Feedback</a>
+        </div>
+        <div style="font-size: 11px;">© 2025-2026 <a href="https://github.com/angusbergman17-cpu" style="color: #94a3b8;">Angus Bergman</a> • <a href="/LICENCE" style="color: #94a3b8;">AGPL v3</a></div>
+    </footer>
+</body>
+</html>

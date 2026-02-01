@@ -1,0 +1,960 @@
+/**
+ * CCFirm™ v7.1 — Hybrid BLE + Pairing Code Firmware
+ * Part of the Commute Compute System™
+ *
+ * HYBRID PROVISIONING (see DEVELOPMENT-RULES.md Section 21.7):
+ *   Phase 1 (BLE): WiFi credentials only (SSID + password)
+ *   Phase 2 (Pairing Code): Server config via 6-character code
+ *
+ * This avoids WiFiManager/captive portal which crashes ESP32-C3.
+ *
+ * Copyright (c) 2026 Angus Bergman
+ * Licensed under CC BY-NC 4.0
+ */
+
+#include <Arduino.h>
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <WiFiClientSecure.h>
+#include <Preferences.h>
+#include <BLEDevice.h>
+#include <BLEServer.h>
+#include <BLEUtils.h>
+#include <BLE2902.h>
+#include <nvs_flash.h>
+#include <bb_epaper.h>
+#include "base64.hpp"
+#include "soc/soc.h"
+#include "soc/rtc_cntl_reg.h"
+#include "../include/config.h"
+#include "../include/cc_logo_data.h"
+
+// ============================================================================
+// CONFIGURATION
+// ============================================================================
+
+#define FIRMWARE_VERSION "7.1.0"
+
+// Screen dimensions
+#ifdef BOARD_TRMNL_MINI
+  #define SCREEN_W 600
+  #define SCREEN_H 448
+  #define LOGO_BOOT CC_LOGO_BOOT_MINI
+  #define LOGO_BOOT_W 192
+  #define LOGO_BOOT_H 280
+  #define LOGO_SMALL CC_LOGO_SMALL_MINI
+  #define LOGO_SMALL_W 128
+  #define LOGO_SMALL_H 130
+  #define PANEL_TYPE EP583R_600x448
+#else
+  #define SCREEN_W 800
+  #define SCREEN_H 480
+  #define LOGO_BOOT CC_LOGO_BOOT
+  #define LOGO_BOOT_W 256
+  #define LOGO_BOOT_H 380
+  #define LOGO_SMALL CC_LOGO_SMALL
+  #define LOGO_SMALL_W 128
+  #define LOGO_SMALL_H 130
+  #define PANEL_TYPE EP75_800x480
+#endif
+
+// Full-screen BMP: 800x480 1-bit = (800/8)*480 + 62 header = 48062 bytes
+#define ZONE_BMP_MAX_SIZE 50000
+#define DEFAULT_SERVER "https://einkptdashboard.vercel.app"
+
+// BLE UUIDs (Hybrid: WiFi credentials ONLY - URL comes via pairing code)
+#define BLE_SERVICE_UUID        "CC000001-0000-1000-8000-00805F9B34FB"
+#define BLE_CHAR_SSID_UUID      "CC000002-0000-1000-8000-00805F9B34FB"
+#define BLE_CHAR_PASSWORD_UUID  "CC000003-0000-1000-8000-00805F9B34FB"
+// NOTE: BLE_CHAR_URL_UUID removed in v7.1 - URL now comes via pairing code only
+#define BLE_CHAR_STATUS_UUID    "CC000005-0000-1000-8000-00805F9B34FB"
+#define BLE_CHAR_WIFI_LIST_UUID "CC000006-0000-1000-8000-00805F9B34FB"
+
+// ============================================================================
+// ZONE DEFINITIONS
+// ============================================================================
+
+struct ZoneDef {
+    const char* id;
+    int x, y, w, h;
+};
+
+const ZoneDef ZONE_DEFS[] = {
+    {"header",  0,   0, 800,  94},
+    {"divider", 0,  94, 800,   2},
+    {"summary", 0,  96, 800,  28},
+    {"legs",    0, 132, 800, 316},
+    {"footer",  0, 448, 800,  32}
+};
+const int NUM_ZONES = 5;
+
+// ============================================================================
+// STATE MACHINE
+// ============================================================================
+
+enum State {
+    STATE_BOOT,
+    STATE_CHECK_WIFI,
+    STATE_BLE_SETUP,
+    STATE_WIFI_CONNECT,
+    STATE_CHECK_PAIRING,
+    STATE_SHOW_PAIRING,
+    STATE_POLL_PAIRING,
+    STATE_FETCH_DASHBOARD,
+    STATE_IDLE,
+    STATE_ERROR
+};
+
+// ============================================================================
+// GLOBALS
+// ============================================================================
+
+BBEPAPER* bbep = nullptr;
+Preferences preferences;
+
+// State
+State currentState = STATE_BOOT;
+char wifiSSID[64] = "";
+char wifiPassword[64] = "";
+char webhookUrl[1024] = "";  // Large buffer for config tokens with full addresses
+char pairingCode[8] = "";
+bool wifiConnected = false;
+bool devicePaired = false;
+bool initialDrawDone = false;
+
+// BLE
+BLEServer* pServer = nullptr;
+BLECharacteristic* pCharStatus = nullptr;
+BLECharacteristic* pCharWiFiList = nullptr;
+bool bleDeviceConnected = false;
+bool bleCredentialsReceived = false;
+String wifiNetworkList = "";
+
+// Timing
+unsigned long lastRefresh = 0;
+unsigned long lastFullRefresh = 0;
+unsigned long pairingStartTime = 0;
+unsigned long lastPollTime = 0;
+int partialRefreshCount = 0;
+int consecutiveErrors = 0;
+
+// Buffers
+uint8_t* zoneBmpBuffer = nullptr;
+
+// ============================================================================
+// FUNCTION DECLARATIONS
+// ============================================================================
+
+void initDisplay();
+void showBootScreen();
+void showSetupScreen();
+void showConnectingScreen();
+void showPairedScreen();
+void showErrorScreen(const char* msg);
+void loadSettings();
+void saveSettings();
+void initBLE();
+void stopBLE();
+String scanWiFiNetworks();
+bool connectWiFi();
+void generatePairingCode();
+bool pollPairingServer();
+bool fetchZoneUpdates(bool forceAll);
+int fetchAndRenderZone(const char* baseUrl, const ZoneDef& def, bool forceAll);
+void doFullRefresh();
+
+// ============================================================================
+// JSON HELPERS
+// ============================================================================
+
+String jsonGetString(const String& json, const char* key) {
+    String search = String("\"") + key + "\":\"";
+    int start = json.indexOf(search);
+    if (start < 0) return "";
+    start += search.length();
+    int end = json.indexOf("\"", start);
+    if (end < 0) return "";
+    return json.substring(start, end);
+}
+
+// ============================================================================
+// BLE CALLBACKS
+// ============================================================================
+
+String scanWiFiNetworks() {
+    Serial.println("[WiFi] Scanning...");
+    WiFi.mode(WIFI_STA);
+    WiFi.disconnect();
+    delay(100);
+
+    int n = WiFi.scanNetworks();
+    String result = "";
+
+    for (int i = 0; i < n && i < 10; i++) {
+        String ssid = WiFi.SSID(i);
+        if (ssid.length() == 0) continue;
+        if (result.indexOf(ssid + ",") >= 0) continue;
+        if (result.length() > 0) result += ",";
+        result += ssid;
+    }
+
+    WiFi.scanDelete();
+    Serial.printf("[WiFi] Found: %s\n", result.c_str());
+    return result;
+}
+
+class ServerCallbacks : public BLEServerCallbacks {
+    void onConnect(BLEServer* pServer) {
+        bleDeviceConnected = true;
+        Serial.println("[BLE] Connected");
+
+        wifiNetworkList = scanWiFiNetworks();
+        if (pCharWiFiList && wifiNetworkList.length() > 0) {
+            pCharWiFiList->setValue(wifiNetworkList.c_str());
+        }
+
+        if (pCharStatus) {
+            pCharStatus->setValue("connected");
+            pCharStatus->notify();
+        }
+    }
+
+    void onDisconnect(BLEServer* pServer) {
+        bleDeviceConnected = false;
+        Serial.println("[BLE] Disconnected");
+
+        if (!bleCredentialsReceived) {
+            BLEDevice::startAdvertising();
+        }
+    }
+};
+
+class CredentialCallbacks : public BLECharacteristicCallbacks {
+    void onWrite(BLECharacteristic* pChar) {
+        std::string value = pChar->getValue();
+        String uuid = pChar->getUUID().toString().c_str();
+
+        if (value.length() > 0) {
+            if (uuid.indexOf("0002") > 0) {
+                // SSID received
+                strncpy(wifiSSID, value.c_str(), sizeof(wifiSSID) - 1);
+                Serial.printf("[BLE] SSID: %s\n", wifiSSID);
+            }
+            else if (uuid.indexOf("0003") > 0) {
+                // Password received - check if we have both credentials
+                strncpy(wifiPassword, value.c_str(), sizeof(wifiPassword) - 1);
+                Serial.println("[BLE] Password received");
+
+                // HYBRID: BLE only provides WiFi credentials
+                // Server URL comes via pairing code in Phase 2
+                if (strlen(wifiSSID) > 0 && strlen(wifiPassword) > 0) {
+                    bleCredentialsReceived = true;
+                    // NOTE: devicePaired stays false - must complete pairing code flow
+                    saveSettings();
+
+                    if (pCharStatus) {
+                        pCharStatus->setValue("wifi_saved");
+                        pCharStatus->notify();
+                    }
+                    Serial.println("[BLE] WiFi credentials saved - pairing code required for server config");
+                }
+            }
+            // NOTE: URL characteristic (0004) removed in v7.1
+            // URL now comes via pairing code only
+        }
+    }
+};
+
+// ============================================================================
+// SETUP
+// ============================================================================
+
+void setup() {
+    WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
+
+    Serial.begin(115200);
+    delay(500);
+    Serial.println("\n=== Commute Compute v" FIRMWARE_VERSION " ===");
+    Serial.println("BLE Provisioning Firmware");
+
+    // Initialize NVS
+    esp_err_t err = nvs_flash_init();
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        nvs_flash_erase();
+        nvs_flash_init();
+    }
+
+    // Create display
+    bbep = new BBEPAPER(PANEL_TYPE);
+
+    // Load settings
+    loadSettings();
+
+    // Allocate buffer
+    zoneBmpBuffer = (uint8_t*)malloc(ZONE_BMP_MAX_SIZE);
+    if (!zoneBmpBuffer) {
+        Serial.println("[ERROR] Buffer alloc failed");
+    }
+
+    // Init display
+    initDisplay();
+
+    currentState = STATE_BOOT;
+}
+
+// ============================================================================
+// MAIN LOOP
+// ============================================================================
+
+void loop() {
+    unsigned long now = millis();
+
+    switch (currentState) {
+        // ==== BOOT: Show logo ====
+        case STATE_BOOT: {
+            Serial.println("[STATE] Boot");
+            showBootScreen();
+            delay(2500);
+            currentState = STATE_CHECK_WIFI;
+            break;
+        }
+
+        // ==== CHECK WIFI: Have credentials? ====
+        case STATE_CHECK_WIFI: {
+            Serial.println("[STATE] Check WiFi");
+            if (strlen(wifiSSID) > 0 && strlen(wifiPassword) > 0) {
+                Serial.println("[OK] WiFi credentials found");
+                currentState = STATE_WIFI_CONNECT;
+            } else {
+                Serial.println("[INFO] No WiFi credentials - BLE setup");
+                currentState = STATE_BLE_SETUP;
+            }
+            break;
+        }
+
+        // ==== BLE SETUP ====
+        case STATE_BLE_SETUP: {
+            static bool screenShown = false;
+            static bool bleInit = false;
+
+            // STEP 1: Generate pairing code and render screen FIRST (before BLE eats memory)
+            if (!screenShown) {
+                generatePairingCode();
+                Serial.println("[Setup] Rendering setup screen before BLE init...");
+                showSetupScreen();
+                screenShown = true;
+                Serial.printf("[Setup] Screen done. Free heap: %d bytes\n", ESP.getFreeHeap());
+            }
+
+            // STEP 2: Start BLE AFTER display is rendered
+            if (!bleInit) {
+                Serial.println("[Setup] Now starting BLE...");
+                initBLE();
+                bleInit = true;
+                Serial.printf("[Setup] BLE started. Free heap: %d bytes\n", ESP.getFreeHeap());
+            }
+
+            if (bleCredentialsReceived) {
+                Serial.println("[BLE] Credentials received!");
+                stopBLE();
+                delay(100);  // Let BLE fully deinitialize
+
+                // CRITICAL: Reinitialize display after BLE deinit corrupts memory
+                Serial.println("[Display] Reinitializing after BLE shutdown...");
+                initDisplay();
+                Serial.printf("[Display] Reinitialized. Free heap: %d bytes\n", ESP.getFreeHeap());
+
+                bleInit = false;
+                screenShown = false;
+                currentState = STATE_WIFI_CONNECT;
+            }
+
+            delay(100);
+            break;
+        }
+
+        // ==== WIFI CONNECT ====
+        case STATE_WIFI_CONNECT: {
+            Serial.println("[STATE] WiFi Connect");
+            // Skip connecting screen - causes crash on ESP32-C3 after BLE/reboot
+            // WiFi connection is fast enough that screen update isn't needed
+            Serial.printf("[WiFi] Connecting to %s...\n", wifiSSID);
+
+            if (connectWiFi()) {
+                wifiConnected = true;
+                Serial.printf("[OK] Connected: %s\n", WiFi.localIP().toString().c_str());
+                consecutiveErrors = 0;
+
+                // HYBRID FLOW: Check if we have a valid webhook URL
+                // If already paired with URL, go straight to dashboard
+                // Otherwise, must complete pairing code flow (Phase 2)
+                if (devicePaired && strlen(webhookUrl) > 0) {
+                    Serial.println("[OK] Already paired with URL - fetching dashboard");
+                    currentState = STATE_FETCH_DASHBOARD;
+                } else {
+                    // WiFi connected but not paired - enter pairing code mode (Phase 2)
+                    Serial.println("[INFO] WiFi OK - entering pairing code mode");
+                    currentState = STATE_SHOW_PAIRING;
+                }
+            } else {
+                Serial.println("[ERROR] WiFi failed");
+                consecutiveErrors++;
+
+                if (consecutiveErrors >= 3) {
+                    // Clear credentials and go back to BLE
+                    wifiSSID[0] = '\0';
+                    wifiPassword[0] = '\0';
+                    saveSettings();
+                    currentState = STATE_BLE_SETUP;
+                    consecutiveErrors = 0;
+                } else {
+                    delay(5000);
+                }
+            }
+            break;
+        }
+
+        // ==== CHECK PAIRING ====
+        case STATE_CHECK_PAIRING: {
+            Serial.println("[STATE] Check Pairing");
+            if (devicePaired && strlen(webhookUrl) > 0) {
+                Serial.println("[OK] Already paired");
+                currentState = STATE_FETCH_DASHBOARD;
+            } else {
+                Serial.println("[INFO] Not paired - show pairing screen");
+                currentState = STATE_SHOW_PAIRING;
+            }
+            break;
+        }
+
+        // ==== SHOW UNIFIED SETUP SCREEN (WiFi connected, awaiting pairing) ====
+        case STATE_SHOW_PAIRING: {
+            if (strlen(pairingCode) == 0) {
+                generatePairingCode();
+            }
+            showSetupScreen();  // Unified screen with both BLE and pairing code
+            pairingStartTime = millis();
+            lastPollTime = 0;
+            currentState = STATE_POLL_PAIRING;
+            break;
+        }
+
+        // ==== POLL PAIRING ====
+        case STATE_POLL_PAIRING: {
+            // Check timeout
+            if (now - pairingStartTime > 600000) {
+                Serial.println("[PAIR] Timeout - regenerating");
+                currentState = STATE_SHOW_PAIRING;
+                break;
+            }
+
+            // Poll every 5 seconds
+            if (now - lastPollTime >= 5000) {
+                lastPollTime = now;
+                if (pollPairingServer()) {
+                    devicePaired = true;
+                    saveSettings();
+                    // Skip showPairedScreen() - crashes on ESP32-C3
+                    // Go straight to dashboard fetch
+                    Serial.println("[OK] Paired! Loading dashboard...");
+                    initialDrawDone = false;
+                    currentState = STATE_FETCH_DASHBOARD;
+                }
+            }
+
+            delay(500);
+            break;
+        }
+
+        // ==== FETCH DASHBOARD ====
+        case STATE_FETCH_DASHBOARD: {
+            Serial.println("[STATE] Fetch Dashboard");
+
+            bool needsFull = !initialDrawDone ||
+                            (now - lastFullRefresh >= 300000) ||
+                            (partialRefreshCount >= MAX_PARTIAL_BEFORE_FULL);
+
+            Serial.printf("[Fetch] needsFull=%d, initialDrawDone=%d\n", needsFull, initialDrawDone);
+            if (fetchZoneUpdates(needsFull)) {
+                if (needsFull) {
+                    Serial.println("[Display] Doing full refresh...");
+                    doFullRefresh();
+                    Serial.println("[Display] Full refresh complete");
+                    lastFullRefresh = now;
+                    partialRefreshCount = 0;
+                } else {
+                    Serial.println("[Display] Doing partial refresh...");
+                    bbep->refresh(REFRESH_PARTIAL, true);
+                    Serial.println("[Display] Partial refresh complete");
+                    partialRefreshCount++;
+                }
+                lastRefresh = now;
+                initialDrawDone = true;
+                consecutiveErrors = 0;
+                currentState = STATE_IDLE;
+            } else {
+                // Check if pairing was cleared due to invalid token
+                if (!devicePaired || strlen(webhookUrl) == 0) {
+                    Serial.println("[INFO] Pairing cleared - returning to setup");
+                    currentState = STATE_SHOW_PAIRING;
+                    consecutiveErrors = 0;
+                } else {
+                    consecutiveErrors++;
+                    if (consecutiveErrors > 5) {
+                        currentState = STATE_ERROR;
+                    } else {
+                        delay(5000);
+                    }
+                }
+            }
+            break;
+        }
+
+        // ==== IDLE ====
+        case STATE_IDLE: {
+            if (now - lastRefresh >= 60000) {
+                currentState = STATE_FETCH_DASHBOARD;
+            }
+
+            if (WiFi.status() != WL_CONNECTED) {
+                wifiConnected = false;
+                currentState = STATE_WIFI_CONNECT;
+            }
+
+            delay(1000);
+            break;
+        }
+
+        // ==== ERROR ====
+        case STATE_ERROR: {
+            // Skip showErrorScreen - crashes on ESP32-C3
+            Serial.println("[ERROR] Connection failed, retrying in 30s...");
+            delay(30000);
+            consecutiveErrors = 0;
+            currentState = STATE_WIFI_CONNECT;
+            break;
+        }
+    }
+}
+
+// ============================================================================
+// BLE FUNCTIONS
+// ============================================================================
+
+void initBLE() {
+    uint8_t mac[6];
+    WiFi.macAddress(mac);
+    char deviceName[32];
+    snprintf(deviceName, sizeof(deviceName), "CommuteCompute-%02X%02X", mac[4], mac[5]);
+
+    BLEDevice::init(deviceName);
+    pServer = BLEDevice::createServer();
+    pServer->setCallbacks(new ServerCallbacks());
+
+    BLEService* pService = pServer->createService(BLE_SERVICE_UUID);
+
+    // HYBRID: BLE only handles WiFi credentials (SSID + Password)
+    // Server URL comes via pairing code (Phase 2)
+    BLECharacteristic* pCharSSID = pService->createCharacteristic(BLE_CHAR_SSID_UUID, BLECharacteristic::PROPERTY_WRITE);
+    pCharSSID->setCallbacks(new CredentialCallbacks());
+
+    BLECharacteristic* pCharPass = pService->createCharacteristic(BLE_CHAR_PASSWORD_UUID, BLECharacteristic::PROPERTY_WRITE);
+    pCharPass->setCallbacks(new CredentialCallbacks());
+
+    // NOTE: URL characteristic removed in v7.1 - URL comes via pairing code only
+
+    pCharStatus = pService->createCharacteristic(BLE_CHAR_STATUS_UUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
+    pCharStatus->addDescriptor(new BLE2902());
+    pCharStatus->setValue("waiting");
+
+    pCharWiFiList = pService->createCharacteristic(BLE_CHAR_WIFI_LIST_UUID, BLECharacteristic::PROPERTY_READ);
+    pCharWiFiList->setValue("");
+
+    pService->start();
+
+    BLEAdvertising* pAdv = BLEDevice::getAdvertising();
+    pAdv->addServiceUUID(BLE_SERVICE_UUID);
+    pAdv->setScanResponse(true);
+    BLEDevice::startAdvertising();
+
+    Serial.printf("[BLE] Advertising: %s\n", deviceName);
+}
+
+void stopBLE() {
+    if (pServer) {
+        BLEDevice::stopAdvertising();
+        BLEDevice::deinit(true);
+        pServer = nullptr;
+    }
+}
+
+// ============================================================================
+// WIFI
+// ============================================================================
+
+bool connectWiFi() {
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(wifiSSID, wifiPassword);
+
+    int attempts = 0;
+    while (WiFi.status() != WL_CONNECTED && attempts < 30) {
+        delay(500);
+        Serial.print(".");
+        attempts++;
+    }
+    Serial.println();
+
+    return WiFi.status() == WL_CONNECTED;
+}
+
+// ============================================================================
+// PAIRING
+// ============================================================================
+
+void generatePairingCode() {
+    const char* chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+    int len = strlen(chars);
+    for (int i = 0; i < 6; i++) {
+        pairingCode[i] = chars[random(0, len)];
+    }
+    pairingCode[6] = '\0';
+    Serial.printf("[PAIR] Code: %s\n", pairingCode);
+}
+
+bool pollPairingServer() {
+    WiFiClientSecure client;
+    client.setInsecure();
+    HTTPClient http;
+
+    String url = String(DEFAULT_SERVER) + "/api/pair/" + String(pairingCode);
+    Serial.printf("[PAIR] Polling: %s\n", url.c_str());
+
+    http.setTimeout(10000);
+    if (!http.begin(client, url)) return false;
+
+    int code = http.GET();
+    if (code != 200) {
+        http.end();
+        return false;
+    }
+
+    String payload = http.getString();
+    http.end();
+
+    String status = jsonGetString(payload, "status");
+    if (status == "paired") {
+        String webhook = jsonGetString(payload, "webhookUrl");
+        if (webhook.length() > 0) {
+            strncpy(webhookUrl, webhook.c_str(), sizeof(webhookUrl) - 1);
+            Serial.printf("[PAIR] Success! URL: %s\n", webhookUrl);
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// ============================================================================
+// DISPLAY
+// ============================================================================
+
+void initDisplay() {
+    bbep->initIO(EPD_DC_PIN, EPD_RST_PIN, EPD_BUSY_PIN, EPD_CS_PIN, EPD_MOSI_PIN, EPD_SCK_PIN, 0);
+    bbep->setPanelType(PANEL_TYPE);
+    bbep->setRotation(0);
+
+    // DO NOT call allocBuffer() - breaks ESP32-C3! (see DEVELOPMENT-RULES.md 5.4)
+
+    pinMode(PIN_INTERRUPT, INPUT_PULLUP);
+    Serial.printf("[Display] Ready. Free heap: %d\n", ESP.getFreeHeap());
+}
+
+void showBootScreen() {
+    bbep->fillScreen(BBEP_WHITE);
+    int bootX = (SCREEN_W - LOGO_BOOT_W) / 2;
+    int bootY = (SCREEN_H - LOGO_BOOT_H) / 2;
+    bbep->loadBMP(LOGO_BOOT, bootX, bootY, BBEP_BLACK, BBEP_WHITE);
+    bbep->refresh(REFRESH_FULL, true);
+    lastFullRefresh = millis();
+}
+
+void showSetupScreen() {
+    Serial.println("[Setup] Rendering setup screen...");
+
+    // Sequential rendering for ESP32-C3 stability
+    bbep->fillScreen(BBEP_WHITE);
+
+    int logoX = (SCREEN_W - LOGO_SMALL_W) / 2;
+    bbep->loadBMP(LOGO_SMALL, logoX, 5, BBEP_BLACK, BBEP_WHITE);
+
+    Serial.println("[Setup] Logo loaded, refreshing...");
+    bbep->refresh(REFRESH_FULL, true);
+    delay(500);
+
+    Serial.println("[Setup] Adding text...");
+    bbep->setFont(FONT_8x8);
+    bbep->setTextColor(BBEP_BLACK, BBEP_WHITE);
+
+    // Title centered
+    bbep->setCursor(320, 145);
+    bbep->print("DEVICE SETUP");
+
+    // Get MAC for device name
+    uint8_t mac[6];
+    WiFi.macAddress(mac);
+    char deviceName[32];
+    snprintf(deviceName, sizeof(deviceName), "CommuteCompute-%02X%02X", mac[4], mac[5]);
+
+    // Phase 1: BLE WiFi Setup - centered
+    bbep->setCursor(280, 175);
+    bbep->print("PHASE 1: WIFI SETUP");
+
+    bbep->setCursor(150, 200);
+    bbep->print("1. On Chrome or Edge, go to:");
+    bbep->setCursor(200, 220);
+    bbep->print("[your-url].vercel.app/setup-wizard.html");
+
+    bbep->setCursor(150, 245);
+    bbep->print("2. Click 'Connect via Bluetooth'");
+
+    bbep->setCursor(150, 265);
+    bbep->print("3. Select: ");
+    bbep->print(deviceName);
+
+    bbep->setCursor(150, 285);
+    bbep->print("4. Enter your WiFi credentials");
+
+    // Phase 2: Pairing Code - centered
+    bbep->setCursor(260, 320);
+    bbep->print("PHASE 2: PAIRING CODE");
+
+    if (wifiConnected && strlen(pairingCode) > 0) {
+        bbep->setCursor(200, 345);
+        bbep->print("WiFi connected! Enter this code:");
+
+        bbep->setCursor(300, 375);
+        bbep->print("CODE:  ");
+        for (int i = 0; i < 6; i++) {
+            bbep->print(pairingCode[i]);
+            if (i < 5) bbep->print(" ");
+        }
+
+        bbep->setCursor(220, 405);
+        bbep->print("Enter code in Setup Wizard Step 5");
+    } else {
+        bbep->setCursor(220, 350);
+        bbep->print("Complete Phase 1 first");
+        bbep->setCursor(180, 375);
+        bbep->print("Pairing code appears after WiFi connects");
+
+        bbep->setCursor(260, 410);
+        bbep->print("Waiting for Bluetooth...");
+    }
+
+    // Version and Copyright centered
+    bbep->setCursor(370, 445);
+    bbep->print("v");
+    bbep->print(FIRMWARE_VERSION);
+
+    bbep->setCursor(220, 465);
+    bbep->print("(c) 2026 Angus Bergman - CC BY-NC 4.0");
+
+    bbep->refresh(REFRESH_FULL, true);
+    Serial.println("[Setup] Setup screen complete");
+}
+
+void showConnectingScreen() {
+    Serial.println("[Display] Rendering connecting screen...");
+
+    // Sequential rendering for ESP32-C3 stability (see DEVELOPMENT-RULES.md 5.4)
+    // Step 1: Clear and load logo
+    bbep->fillScreen(BBEP_WHITE);
+    int smallX = (SCREEN_W - LOGO_SMALL_W) / 2;
+    bbep->loadBMP(LOGO_SMALL, smallX, 100, BBEP_BLACK, BBEP_WHITE);
+    bbep->refresh(REFRESH_FULL, true);
+    Serial.println("[Display] Logo loaded");
+    delay(300);
+
+    // Step 2: Add text
+    bbep->setFont(FONT_8x8);
+    bbep->setTextColor(BBEP_BLACK, BBEP_WHITE);
+
+    bbep->setCursor(300, 280); bbep->print("CONNECTING TO WIFI...");
+    bbep->setCursor(280, 320); bbep->print("Network: ");
+    bbep->print(wifiSSID);
+
+    // Footer
+    bbep->drawLine(50, 440, 750, 440, BBEP_BLACK);
+    bbep->setCursor(360, 455); bbep->print("v" FIRMWARE_VERSION);
+
+    bbep->refresh(REFRESH_FULL, true);
+    Serial.println("[Display] Connecting screen complete");
+}
+
+// showPairingScreen removed - unified into showSetupScreen()
+
+void showPairedScreen() {
+    Serial.println("[Display] Rendering paired screen...");
+
+    // Sequential rendering for ESP32-C3 stability
+    bbep->fillScreen(BBEP_WHITE);
+    int smallX = (SCREEN_W - LOGO_SMALL_W) / 2;
+    bbep->loadBMP(LOGO_SMALL, smallX, 80, BBEP_BLACK, BBEP_WHITE);
+    bbep->refresh(REFRESH_FULL, true);
+    delay(300);
+
+    bbep->setFont(FONT_8x8);
+    bbep->setTextColor(BBEP_BLACK, BBEP_WHITE);
+
+    bbep->setCursor(365, 260); bbep->print("PAIRED!");
+    bbep->setCursor(260, 300); bbep->print("Loading your dashboard...");
+
+    // Footer
+    bbep->drawLine(50, 440, 750, 440, BBEP_BLACK);
+    bbep->setCursor(220, 455); bbep->print("(c) 2026 Angus Bergman - CC BY-NC 4.0");
+    bbep->setCursor(360, 470); bbep->print("v" FIRMWARE_VERSION);
+
+    bbep->refresh(REFRESH_FULL, true);
+    Serial.println("[Display] Paired screen complete");
+}
+
+void showErrorScreen(const char* msg) {
+    Serial.println("[Display] Rendering error screen...");
+
+    // Sequential rendering for ESP32-C3 stability
+    bbep->fillScreen(BBEP_WHITE);
+    int smallX = (SCREEN_W - LOGO_SMALL_W) / 2;
+    bbep->loadBMP(LOGO_SMALL, smallX, 80, BBEP_BLACK, BBEP_WHITE);
+    bbep->refresh(REFRESH_FULL, true);
+    delay(300);
+
+    bbep->setFont(FONT_8x8);
+    bbep->setTextColor(BBEP_BLACK, BBEP_WHITE);
+
+    bbep->setCursor(370, 240); bbep->print("ERROR");
+    bbep->setCursor(200, 280); bbep->print(msg);
+    bbep->setCursor(280, 340); bbep->print("Retrying in 30 seconds...");
+
+    // Footer
+    bbep->drawLine(50, 440, 750, 440, BBEP_BLACK);
+    bbep->setCursor(360, 455); bbep->print("v" FIRMWARE_VERSION);
+
+    bbep->refresh(REFRESH_FULL, true);
+    Serial.println("[Display] Error screen complete");
+}
+
+// ============================================================================
+// SETTINGS
+// ============================================================================
+
+void loadSettings() {
+    preferences.begin("cc-device", true);
+
+    String ssid = preferences.getString("wifi_ssid", "");
+    String pass = preferences.getString("wifi_pass", "");
+    String url = preferences.getString("webhookUrl", "");
+    devicePaired = preferences.getBool("paired", false);
+
+    strncpy(wifiSSID, ssid.c_str(), sizeof(wifiSSID) - 1);
+    strncpy(wifiPassword, pass.c_str(), sizeof(wifiPassword) - 1);
+    strncpy(webhookUrl, url.c_str(), sizeof(webhookUrl) - 1);
+
+    preferences.end();
+
+    Serial.printf("[Settings] SSID: %s, Paired: %s\n",
+                  strlen(wifiSSID) > 0 ? wifiSSID : "(none)",
+                  devicePaired ? "yes" : "no");
+}
+
+void saveSettings() {
+    preferences.begin("cc-device", false);
+    preferences.putString("wifi_ssid", wifiSSID);
+    preferences.putString("wifi_pass", wifiPassword);
+    preferences.putString("webhookUrl", webhookUrl);
+    preferences.putBool("paired", devicePaired);
+    preferences.end();
+    Serial.println("[Settings] Saved");
+}
+
+// ============================================================================
+// DASHBOARD FETCHING
+// ============================================================================
+
+// Full-screen BMP buffer (800x480 1-bit = ~48KB)
+#define FULLSCREEN_BMP_SIZE 50000
+
+bool fetchFullScreenBMP() {
+    if (strlen(webhookUrl) == 0) return false;
+
+    WiFiClientSecure client;
+    client.setInsecure();
+    HTTPClient http;
+
+    // Fetch full-screen BMP from device endpoint
+    String url = String(webhookUrl) + "?format=bmp";
+    Serial.printf("[Fetch] Full screen: %s\n", url.c_str());
+
+    http.setTimeout(20000);
+    if (!http.begin(client, url)) {
+        Serial.println("[Fetch] Failed to begin HTTP");
+        return false;
+    }
+
+    int code = http.GET();
+    if (code != 200) {
+        Serial.printf("[Fetch] HTTP %d\n", code);
+        http.end();
+
+        // If 400 Bad Request, token is invalid/truncated - clear pairing
+        if (code == 400) {
+            Serial.println("[Fetch] Invalid token - clearing pairing");
+            webhookUrl[0] = '\0';
+            devicePaired = false;
+            saveSettings();
+        }
+        return false;
+    }
+
+    int len = http.getSize();
+    Serial.printf("[Fetch] Size: %d bytes\n", len);
+
+    if (len <= 0 || len > FULLSCREEN_BMP_SIZE) {
+        Serial.printf("[Fetch] Bad size: %d\n", len);
+        http.end();
+        return false;
+    }
+
+    // Use existing buffer (it's big enough)
+    WiFiClient* stream = http.getStreamPtr();
+    int read = stream->readBytes(zoneBmpBuffer, len);
+    http.end();
+
+    if (read != len) {
+        Serial.printf("[Fetch] Read mismatch: %d vs %d\n", read, len);
+        return false;
+    }
+
+    if (zoneBmpBuffer[0] != 'B' || zoneBmpBuffer[1] != 'M') {
+        Serial.printf("[Fetch] Not BMP: 0x%02X 0x%02X\n", zoneBmpBuffer[0], zoneBmpBuffer[1]);
+        return false;
+    }
+
+    Serial.println("[Fetch] Loading BMP to display...");
+    int result = bbep->loadBMP(zoneBmpBuffer, 0, 0, BBEP_BLACK, BBEP_WHITE);
+
+    if (result == BBEP_SUCCESS) {
+        Serial.println("[Fetch] BMP loaded successfully");
+        return true;
+    } else {
+        Serial.printf("[Fetch] loadBMP failed: %d\n", result);
+        return false;
+    }
+}
+
+bool fetchZoneUpdates(bool forceAll) {
+    return fetchFullScreenBMP();
+}
+
+void doFullRefresh() {
+    bbep->refresh(REFRESH_FULL, true);
+}

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+    Commute Compute v11 - OG TRMNL Dashboard
+    Design Language v11 - Disruption & Alternate Routes
+    Copyright (c) 2026 Angus Bergman
+    Licensed under AGPL v3
+-->
+<head>
+    <meta charset="UTF-8">
+    <title>Commute Compute v11 Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; background: #1e293b; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; }
+        .frame { background: #333; padding: 25px; border-radius: 16px; }
+        .label { color: #666; font-size: 11px; text-align: center; margin-bottom: 12px; }
+        #display { width: 800px; height: 480px; background: #f5f5f0; border: 2px solid #1a1a1a; position: relative; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+        .el { position: absolute; color: #1a1a1a; }
+        .el-w { position: absolute; color: #f5f5f0; }
+        .el-gray { position: absolute; color: #888; }
+        .fill { position: absolute; background: #1a1a1a; }
+        .box { position: absolute; border: 2px solid #1a1a1a; }
+        .box-dashed { position: absolute; border: 2px dashed #888; }
+        .box-outline { position: absolute; border: 2px solid #1a1a1a; background: transparent; }
+        .box-fill { position: absolute; border: 2px solid #1a1a1a; background: #1a1a1a; color: #f5f5f0; }
+        .cancelled { position: absolute; background: repeating-linear-gradient(135deg, #f5f5f0, #f5f5f0 4px, #ccc 4px, #ccc 8px); border: 2px solid #888; }
+        .num-circle { position: absolute; width: 24px; height: 24px; background: #1a1a1a; border-radius: 50%; color: #f5f5f0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+        .num-circle-x { position: absolute; width: 24px; height: 24px; border: 2px dashed #888; border-radius: 50%; color: #888; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; background: #f5f5f0; }
+        .arrow { position: absolute; font-size: 16px; font-weight: 900; color: #1a1a1a; }
+        .icon { position: absolute; font-size: 20px; }
+        .status { margin-top: 15px; color: #888; font-size: 11px; }
+        .live { display: flex; align-items: center; gap: 6px; }
+        .dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+    </style>
+</head>
+<body>
+    <div class="frame">
+        <div class="label"><span class="live"><span class="dot"></span> LIVE</span> OG TRMNL v11 (800×480) — Disruption Demo</div>
+        <div id="display"></div>
+    </div>
+    <div class="status" id="status">Loading...</div>
+    <script>
+        // DEMO: Disruption Scenario
+        const demo = {
+            location: '1 CLARA ST, SOUTH YARRA',
+            time: '7:20',
+            ampm: 'AM',
+            day: 'Thursday',
+            date: '30 January',
+            weather: { temp: 19, condition: 'Overcast', umbrella: false },
+            status: { type: 'disruption', arrive: '8:52', delta: '+18 min', total: '92 min' },
+            legs: [
+                { num: 1, icon: '☕', title: 'Coffee at Norman', sub: '✓ EXTRA TIME — Disruption', time: '~10', unit: 'MIN', state: 'normal' },
+                { num: 2, icon: '🚶', title: 'Walk to South Yarra Stn', sub: 'Platform 1', time: '10', unit: 'MIN WALK', state: 'normal' },
+                { num: 'X', icon: '🚃', title: '⚠ Sandringham Line', sub: 'SUSPENDED — Signal fault', time: 'CANCELLED', unit: '', state: 'cancelled' },
+                { num: 3, icon: '🚌', title: 'Rail Replacement Bus', sub: 'S Yarra→Richmond • Next: 5, 15 min', time: '5', unit: 'MIN', state: 'normal' },
+                { num: 4, icon: '🚃', title: 'Train to Parliament', sub: 'Hurstbridge • Next: 4, 10 min', time: '4', unit: 'MIN', state: 'normal' }
+            ],
+            dest: { address: '80 COLLINS ST, MELBOURNE', arrive: '8:52' }
+        };
+
+        function render(d) {
+            const el = document.getElementById('display');
+            el.innerHTML = '';
+            
+            // Location
+            add('el', 16, 8, d.location, '11px');
+            
+            // Time
+            add('el', 16, 28, d.time, '64px', '800');
+            add('el', 130, 70, d.ampm, '18px', '600');
+            
+            // Day/Date
+            add('el', 280, 32, d.day, '20px', '700');
+            add('el', 280, 56, d.date, '16px');
+            
+            // Weather box
+            addBox(640, 16, 144, 80);
+            add('el', 656, 24, d.weather.temp + '°', '36px', '700');
+            add('el', 656, 62, d.weather.condition, '12px');
+            const umbClass = d.weather.umbrella ? 'box-fill' : 'box-outline';
+            addEl(umbClass, 656, 78, 120, 16);
+            add(d.weather.umbrella ? 'el-w' : 'el', 662, 80, d.weather.umbrella ? '■ BRING UMBRELLA' : 'NO UMBRELLA', '10px', '600');
+            
+            // Status bar
+            addFill(0, 100, 800, 28);
+            let statusIcon = d.status.type === 'disruption' ? '⚠' : (d.status.type === 'delay' ? '⏱' : '');
+            let statusText = statusIcon + ' ' + d.status.type.toUpperCase() + ' → Arrive ' + d.status.arrive;
+            if (d.status.delta) statusText += ' (' + d.status.delta + ')';
+            if (d.status.type === 'normal') statusText = 'LEAVE NOW → Arrive ' + d.status.arrive;
+            add('el-w', 16, 106, statusText, '13px', '600');
+            add('el-w', 720, 106, d.status.total, '13px', '600');
+            
+            // Legs
+            let y = 136;
+            d.legs.forEach((leg, i) => {
+                const h = leg.state === 'cancelled' ? 48 : 56;
+                
+                // Number circle
+                if (leg.num === 'X') {
+                    addEl('num-circle-x', 16, y + 14, 24, 24);
+                    add('el-gray', 23, y + 18, '✗', '12px', '700');
+                } else {
+                    addEl('num-circle', 16, y + 14, 24, 24);
+                    add('el-w', 23, y + 18, leg.num, '12px', '700');
+                }
+                
+                // Box
+                if (leg.state === 'cancelled') {
+                    addEl('cancelled', 48, y, 692, h);
+                } else if (leg.state === 'skip' || leg.state === 'delayed') {
+                    addEl('box-dashed', 48, y, 692, h);
+                } else {
+                    addBox(48, y, 692, h);
+                }
+                
+                // Icon
+                const gray = leg.state === 'skip' || leg.state === 'cancelled';
+                add(gray ? 'el-gray' : 'el', 58, y + (h/2 - 12), leg.icon, '20px');
+                
+                // Title + Sub
+                add(gray ? 'el-gray' : 'el', 90, y + 10, leg.title, '16px', '700');
+                add(gray ? 'el-gray' : 'el-gray', 90, y + 30, leg.sub, '11px');
+                
+                // Time box
+                if (leg.time !== 'CANCELLED') {
+                    addFill(680, y, 60, h);
+                    add('el-w', 692, y + 8, leg.time, '28px', '800');
+                    add('el-w', 692, y + 38, leg.unit, '9px');
+                } else {
+                    add('el-gray', 680, y + 18, 'CANCELLED', '11px', '700');
+                }
+                
+                // Arrow
+                if (i < d.legs.length - 1 && leg.state !== 'cancelled') {
+                    add('arrow', 32, y + h + 2, '▼');
+                }
+                
+                y += h + 8;
+            });
+            
+            // Footer
+            addFill(0, 452, 800, 28);
+            add('el-w', 16, 458, d.dest.address, '14px', '700');
+            add('el-w', 620, 458, 'ARRIVE', '11px');
+            add('el-w', 700, 454, d.dest.arrive, '20px', '800');
+        }
+        
+        function add(cls, x, y, text, size, weight) {
+            const e = document.createElement('div');
+            e.className = cls;
+            e.style.cssText = `left:${x}px;top:${y}px;font-size:${size||'14px'};${weight?'font-weight:'+weight:''}`;
+            e.textContent = text;
+            document.getElementById('display').appendChild(e);
+        }
+        function addFill(x, y, w, h) { addEl('fill', x, y, w, h); }
+        function addBox(x, y, w, h) { addEl('box', x, y, w, h); }
+        function addEl(cls, x, y, w, h) {
+            const e = document.createElement('div');
+            e.className = cls;
+            e.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${h}px`;
+            document.getElementById('display').appendChild(e);
+        }
+        
+        render(demo);
+        document.getElementById('status').textContent = 'v11 Demo: Disruption with Rail Replacement Bus';
+    </script>
+    
+    <!-- Footer -->
+    <footer style="background: #1e293b; border-top: 1px solid rgba(255,255,255,0.1); padding: 20px; margin-top: 30px; text-align: center; font-size: 13px; color: #94a3b8;">
+        <div style="margin-bottom: 12px;">
+            <a href="https://opendata.transport.vic.gov.au" target="_blank" rel="noopener" style="color: #94a3b8;">Transport Victoria OpenData</a> (CC BY 4.0) •
+            <a href="/attribution.html" style="color: #94a3b8;">All Sources</a>
+        </div>
+        <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;">
+            <a href="https://buymeacoffee.com/angusbergman" target="_blank" rel="noopener" style="padding: 6px 12px; background: #FFDD00; color: #000; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 12px;">☕ Coffee</a>
+            <a href="https://github.com/sponsors/angusbergman17-cpu" target="_blank" rel="noopener" style="padding: 6px 12px; background: #db61a2; color: #fff; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 12px;">💖 Sponsor</a>
+            <a href="https://github.com/angusbergman17-cpu/CommuteCompute/issues/new" target="_blank" rel="noopener" style="padding: 6px 12px; background: #6366f1; color: #fff; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 12px;">📝 Feedback</a>
+        </div>
+        <div style="font-size: 11px;">© 2025-2026 <a href="https://github.com/angusbergman17-cpu" style="color: #94a3b8;">Angus Bergman</a> • <a href="/LICENCE" style="color: #94a3b8;">AGPL v3</a></div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+.env.local
+.test-config.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+.cache/
+
+# Persistent storage
+cache/
+user-preferences.json
+devices.json
+data/preferences.json
+
+# Private configuration (never commit)
+PRIVATE-CONFIG.md
+*.secret
+
+# Firmware build artifacts
+firmware/build/
+firmware/.pio/
+firmware/captures/
+firmware/*.bin
+firmware/*.elf
+
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/

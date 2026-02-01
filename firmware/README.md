@@ -1,0 +1,234 @@
+# CCFirm™ — Commute Compute Custom Firmware
+
+Custom firmware for TRMNL e-ink devices with **partial refresh support** for faster updates.
+
+![Version](https://img.shields.io/badge/version-6.1--60s-blue)
+![Anti-Brick](https://img.shields.io/badge/Anti--Brick-12%2F12%20✓-brightgreen)
+![Platform](https://img.shields.io/badge/platform-ESP32--C3-orange)
+![Logo](https://img.shields.io/badge/Logos-32bit%20Aligned%20✓-brightgreen)
+
+## Features
+
+- **20-second partial refresh** - Updates departure times quickly (~0.3s)
+- **10-minute full refresh** - Complete screen redraw to prevent ghosting
+- **WiFiManager** - Easy WiFi setup via captive portal
+- **Watchdog Timer** - 30s timeout prevents device bricking
+- **Low power mode** - Light sleep between updates for battery savings
+- **Auto-reconnect** - Handles WiFi disconnections gracefully
+- **100% Anti-Brick Compliant** - All 12 safety rules enforced
+
+## Battery Life Estimate
+
+| Refresh Mode | Updates/Day | Battery Life |
+|--------------|-------------|--------------|
+| 20s partial / 10 min full | ~4320 | 1-2 days |
+| 1 min partial / 10 min full | ~1440 | 2-3 days |
+
+## Hardware Requirements
+
+- **TRMNL device** (ESP32-C3 + Waveshare 7.5" B/W e-ink)
+- **USB-C cable** for flashing
+- **Computer** with PlatformIO installed
+
+## Quick Start
+
+### 1. Install PlatformIO
+
+```bash
+# Install PlatformIO CLI
+pip install platformio
+
+# Or use VS Code extension
+# Search "PlatformIO IDE" in VS Code extensions
+```
+
+### 2. Configure Server URL
+
+Edit `include/config.h` and update the server URL:
+
+```cpp
+#define SERVER_URL "https://your-server-name.vercel.app"
+```
+
+### 3. Build Firmware
+
+```bash
+cd firmware
+pio run
+```
+
+### 4. Flash to Device
+
+1. **Put TRMNL in bootloader mode:**
+   - Hold the BOOT button
+   - Press and release RESET
+   - Release BOOT button
+
+2. **Flash the firmware:**
+   ```bash
+   pio run --target upload
+   ```
+
+3. **Monitor serial output:**
+   ```bash
+   pio device monitor
+   ```
+
+## WiFi Setup
+
+On first boot (or after reset):
+
+1. Device creates WiFi hotspot: **Commute Compute-Setup**
+2. Connect to it with password: **transport123**
+3. Browser opens automatically (or go to 192.168.4.1)
+4. Select your WiFi network and enter password
+5. Device reboots and connects
+
+## Pin Configuration
+
+| Signal | ESP32-C3 Pin |
+|--------|--------------|
+| EPD_BUSY | GPIO 4 |
+| EPD_RST | GPIO 2 |
+| EPD_DC | GPIO 3 |
+| EPD_CS | GPIO 7 |
+| EPD_CLK | GPIO 6 |
+| EPD_DIN | GPIO 5 |
+| BATTERY | GPIO 1 |
+
+## Logo Assets (BMP Requirements)
+
+**⚠️ CRITICAL: All BMP widths MUST be multiples of 32 pixels!**
+
+The bb_epaper library renders BMP row padding bits as black pixels. Non-aligned widths cause vertical bar artifacts on e-ink displays.
+
+| Asset | Dimensions | File | Purpose |
+|-------|------------|------|---------|
+| Boot logo | 256×380 | `cc_logo_boot.bmp` | Full COMMUTE COMPUTE branding |
+| Small logo | 128×130 | `cc_logo_small.bmp` | Connecting/setup screens |
+
+**To regenerate logos:**
+```bash
+convert source.png \
+  -resize x<height> \
+  -gravity center -background white \
+  -extent <width_mult_32>x<height> \
+  -threshold 50% -type bilevel \
+  BMP3:output.bmp
+```
+
+**Logo source:** `include/cc_logo.bmp` (1056×992 original)
+
+## Adjusting Refresh Rates
+
+Edit `include/config.h`:
+
+```cpp
+// For longer battery life (2 minutes partial)
+#define PARTIAL_REFRESH_INTERVAL 120000
+
+// For faster updates (30 seconds partial)
+#define PARTIAL_REFRESH_INTERVAL 30000
+```
+
+## Troubleshooting
+
+### No Serial Output
+
+**ESP32-C3 requires USB CDC enabled!**
+
+If you see no output from `pio device monitor`, check `platformio.ini`:
+
+```ini
+build_flags =
+    -D ARDUINO_USB_MODE=1              # MUST be 1
+    -D ARDUINO_USB_CDC_ON_BOOT=1       # MUST be 1
+```
+
+See `docs/FLASHING.md` for details.
+
+### Display shows garbage/artifacts
+- Force a full refresh by pressing RESET
+- Reduce partial refresh count before full refresh in `main.cpp`
+
+### WiFi won't connect
+- Hold RESET for 10 seconds to clear saved credentials
+- Check serial monitor for connection errors
+
+### Device not detected for flashing
+- ESP32-C3 with USB-JTAG does NOT need bootloader mode
+- Try different USB cable (must support data)
+- Check device enumeration: `pio device list`
+
+## Building from Source
+
+```bash
+# Clone repository
+git clone <your-repo>
+cd CommuteCompute/firmware
+
+# Install dependencies
+pio pkg install
+
+# Build
+pio run
+
+# Upload
+pio run --target upload
+
+# Monitor
+pio device monitor --baud 115200
+```
+
+## API Endpoints
+
+The firmware communicates with these server endpoints:
+
+| Endpoint | Purpose |
+|----------|---------|
+| `/api/zones` | Zone-based partial refresh data (JSON + base64 BMP) |
+| `/api/screen` | Full 800×480 PNG for webhook/fallback |
+| `/api/status` | Server health check |
+| `/api/livedash` | Multi-device LiveDash renderer |
+
+## How It Works
+
+1. Device wakes up every 20 seconds
+2. Fetches zone data from `/api/zones`
+3. Server calculates everything: leave time, coffee decision, SmartCommute routing
+4. Server renders 1-bit BMP zones, returns only changed zones
+5. Device applies partial refresh to changed zones only
+6. Goes back to light sleep
+
+The server is the brain - the device just displays what it's told.
+
+## License
+
+AGPL v3 (GNU Affero General Public Licence v3.0 International License)
+Copyright © 2026 Angus Bergman
+See LICENCE for full terms
+
+## Known Issues & Workarounds
+
+### FONT_12x16 Rotation Bug (bb_epaper + TRMNL)
+
+**Issue:** When using `bbep.begin(EPD_TRMNL_OG)` with `FONT_12x16`, text renders rotated 90° counter-clockwise.
+
+**Affected:** TRMNL OG hardware with bb_epaper library v2.0.3+
+
+**Root Cause:** Font rendering bug in bb_epaper library specific to larger fonts with EPD_TRMNL_OG preset.
+
+**Workaround:** Use `FONT_8x8` only. All 8x8 text renders correctly in the expected orientation.
+
+```cpp
+// BROKEN - text rotates 90° CCW
+bbep.setFont(FONT_12x16);
+bbep.print("This will be rotated");
+
+// WORKING - text renders correctly
+bbep.setFont(FONT_8x8);
+bbep.print("This displays properly");
+```
+
+**Discovered:** 2026-01-28 via test pattern diagnostic
+**Status:** Workaround applied, upstream bug not yet reported
