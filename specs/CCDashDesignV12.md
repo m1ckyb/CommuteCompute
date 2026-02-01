@@ -357,8 +357,6 @@ CCDash V12 is fully compliant with the Melbourne Metro Tunnel network restructur
 | Line | Previous Route | New Route |
 |------|----------------|-----------|
 | Sunbury | City Loop | Metro Tunnel (Arden → Parkville → State Library → Town Hall → Anzac) |
-| Craigieburn | City Loop | Metro Tunnel |
-| Upfield | City Loop | Metro Tunnel |
 | Pakenham | City Loop | Metro Tunnel (Anzac → Town Hall → State Library → Parkville → Arden) |
 | Cranbourne | City Loop | Metro Tunnel |
 

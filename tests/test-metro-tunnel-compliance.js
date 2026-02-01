@@ -64,8 +64,8 @@ console.log('└' + '─'.repeat(68) + '┘');
 const metroTunnelLineTests = [
   { line: 'Sunbury', expected: true },
   { line: 'sunbury', expected: true },
-  { line: 'Craigieburn', expected: true },
-  { line: 'Upfield', expected: true },
+  { line: 'Craigieburn', expected: false },
+  { line: 'Upfield', expected: false },
   { line: 'Pakenham', expected: true },
   { line: 'Cranbourne', expected: true },
   { line: 'Belgrave', expected: false },  // City Loop
@@ -127,8 +127,6 @@ const discontinuedTests = [
   { station: 'Southern Cross', line: 'Sunbury', discontinued: true },
   { station: 'Southern Cross', line: 'Cranbourne', discontinued: true },
   { station: 'Melbourne Central', line: 'Pakenham', discontinued: true },
-  { station: 'Melbourne Central', line: 'Upfield', discontinued: true },
-  { station: 'Flagstaff', line: 'Craigieburn', discontinued: true },
   { station: 'Parliament', line: 'Sunbury', discontinued: true },
   
   // These should STILL be served
@@ -220,8 +218,8 @@ const cbdRecommendationTests = [
   { line: 'Pakenham', expected: 'stateLibrary' },
   { line: 'Cranbourne', expected: 'stateLibrary' },
   { line: 'Sunbury', expected: 'stateLibrary' },
-  { line: 'Craigieburn', expected: 'stateLibrary' },
-  { line: 'Upfield', expected: 'stateLibrary' },
+  { line: 'Craigieburn', expected: 'flindersStreet' },
+  { line: 'Upfield', expected: 'flindersStreet' },
   { line: 'Belgrave', expected: 'flindersStreet' },
   { line: 'Lilydale', expected: 'flindersStreet' },
   { line: 'Frankston', expected: 'flindersStreet' },
@@ -277,7 +275,7 @@ const renderScenarios = [
       line: 'Pakenham',
       legs: [
         { type: 'walk', from: 'Home', to: 'Dandenong Station', duration: 5 },
-        { type: 'train', from: 'Dandenong', to: 'Town Hall', line: 'Pakenham', duration: 35, via: 'Metro Tunnel' },
+        { type: 'train', from: 'Dandenong', to: 'Town Hall', line: 'Pakenham', duration: 35, via: 'City Loop' },
         { type: 'walk', from: 'Town Hall', to: 'Work', duration: 3 }
       ],
       totalDuration: 43,
@@ -293,7 +291,7 @@ const renderScenarios = [
       line: 'Sunbury',
       legs: [
         { type: 'walk', from: 'Home', to: 'Sunshine Station', duration: 8 },
-        { type: 'train', from: 'Sunshine', to: 'Parkville', line: 'Sunbury', duration: 18, via: 'Metro Tunnel' },
+        { type: 'train', from: 'Sunshine', to: 'Parkville', line: 'Sunbury', duration: 18, via: 'City Loop' },
         { type: 'walk', from: 'Parkville', to: 'Royal Melbourne Hospital', duration: 2 }
       ],
       totalDuration: 28,
@@ -309,7 +307,7 @@ const renderScenarios = [
       line: 'Cranbourne',
       legs: [
         { type: 'walk', from: 'Home', to: 'Narre Warren Station', duration: 6 },
-        { type: 'train', from: 'Narre Warren', to: 'Anzac', line: 'Cranbourne', duration: 42, via: 'Metro Tunnel' },
+        { type: 'train', from: 'Narre Warren', to: 'Anzac', line: 'Cranbourne', duration: 42, via: 'City Loop' },
         { type: 'coffee', from: 'Anzac Station', to: 'Domain Cafe', duration: 8 },
         { type: 'walk', from: 'Domain Cafe', to: 'Work', duration: 5 }
       ],
@@ -336,14 +334,14 @@ const renderScenarios = [
   },
   {
     name: 'upfield-to-university',
-    description: 'Upfield Line to Melbourne University (via Parkville)',
+    description: 'Upfield Line to Melbourne University (via City Loop)',
     journey: {
       origin: 'Coburg',
       destination: 'Melbourne University',
       line: 'Upfield',
       legs: [
         { type: 'walk', from: 'Home', to: 'Coburg Station', duration: 3 },
-        { type: 'train', from: 'Coburg', to: 'Parkville', line: 'Upfield', duration: 12, via: 'Metro Tunnel' },
+        { type: 'train', from: 'Coburg', to: 'Melbourne Central', line: 'Upfield', duration: 12, via: 'City Loop' },
         { type: 'walk', from: 'Parkville', to: 'University', duration: 4 }
       ],
       totalDuration: 19,

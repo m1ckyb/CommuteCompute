@@ -1047,7 +1047,7 @@ These lines now run through the Metro Tunnel **instead of the City Loop**:
 
 #### 11.5.3 Discontinued City Loop Services
 
-**⚠️ CRITICAL:** The following City Loop stations **no longer receive** Sunbury/Craigieburn/Upfield/Pakenham/Cranbourne services:
+**⚠️ CRITICAL:** The following City Loop stations **no longer receive** Sunbury/Pakenham/Cranbourne services:
 
 | Station | Lost Lines | Still Served By | Nearest Metro Tunnel |
 |---------|------------|-----------------|---------------------|
@@ -1096,7 +1096,7 @@ export function getRoutingChangeInfo(stationName) { ... }
 SmartCommute automatically:
 
 1. **Detects Metro Tunnel lines** — Uses `isMetroTunnelLine()` to identify affected services
-2. **Routes via Metro Tunnel** — Directs Sunbury/Craigieburn/Upfield/Pakenham/Cranbourne through new stations
+2. **Routes via Metro Tunnel** — Directs Sunbury/Pakenham/Cranbourne through new stations
 3. **Warns on discontinued services** — If user expects to catch a Metro Tunnel line at a City Loop station, provides alternatives
 4. **Suggests interchange options** — North Melbourne remains the key interchange between Metro Tunnel and City Loop lines
 

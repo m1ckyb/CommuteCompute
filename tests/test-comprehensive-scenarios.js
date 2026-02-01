@@ -244,7 +244,7 @@ const scenarios = [
       { type: 'walk', title: 'Walk to Cafe', subtitle: 'From home • cafe', minutes: 2 },
       { type: 'coffee', title: 'Warm Up Cafe', subtitle: '✓ TIME FOR COFFEE', minutes: 8 },
       { type: 'walk', title: 'Walk to station', subtitle: 'Essendon Station', minutes: 4 },
-      { type: 'train', title: 'Train to Arden', subtitle: 'Craigieburn Line • via Metro Tunnel • Next: 7, 15 min', minutes: 14, departTime: '6:51am' },
+      { type: 'train', title: 'Train to Arden', subtitle: 'Craigieburn Line • via City Loop • Next: 7, 15 min', minutes: 14, departTime: '6:51am' },
       { type: 'walk', title: 'Walk to Office', subtitle: 'work', minutes: 5 }
     ],
     services: { ok: true },
@@ -425,7 +425,7 @@ const scenarios = [
     arriveBy: '08:30',
     legs: [
       { type: 'walk', title: 'Walk to station', subtitle: 'From home • Coburg Station', minutes: 4 },
-      { type: 'train', title: 'Train to Parkville', subtitle: 'Upfield Line • via Metro Tunnel', minutes: 12, departTime: '7:42am' },
+      { type: 'train', title: 'Train to Parkville', subtitle: 'Upfield Line • via City Loop', minutes: 12, departTime: '7:42am' },
       { type: 'walk', title: 'Walk to Office', subtitle: 'work', minutes: 5 }
     ],
     services: { ok: true },
