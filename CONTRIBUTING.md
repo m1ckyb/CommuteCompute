@@ -1,5 +1,7 @@
 # Contributing to CommuteCompute
 
+> **By submitting a contribution, you agree to the [Contributor License Agreement (CLA.md)](CLA.md).**
+
 Thank you for your interest in contributing to CommuteCompute.
 
 To protect the integrity and ownership of the project, contributions are
