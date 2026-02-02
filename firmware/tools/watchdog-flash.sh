@@ -1,4 +1,9 @@
 #!/bin/bash
+# CommuteCompute™ - Smart Transit Display for Australian Public Transport
+# Copyright © 2025-2026 Angus Bergman
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Licensed under AGPL-3.0-or-later. See LICENCE file.
+
 # Watchdog Flash Script - Auto-reflash on crash/freeze
 # Based on prior working recovery methods
 

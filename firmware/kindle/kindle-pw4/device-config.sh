@@ -1,4 +1,9 @@
-#!/bin/sh
+#!/bin/bash
+# CommuteCompute™ - Smart Transit Display for Australian Public Transport
+# Copyright © 2025-2026 Angus Bergman
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Licensed under AGPL-3.0-or-later. See LICENCE file.
+
 # Kindle Paperwhite 4 (10th gen) - Device Configuration
 # Commute Compute Firmware v2.0
 # Copyright (c) 2026 Angus Bergman - CC BY-NC 4.0

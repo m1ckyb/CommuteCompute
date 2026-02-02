@@ -1,4 +1,9 @@
 #!/bin/bash
+# CommuteCompute™ - Smart Transit Display for Australian Public Transport
+# Copyright © 2025-2026 Angus Bergman
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Licensed under AGPL-3.0-or-later. See LICENCE file.
+
 # Test Data Flow for Commute Compute System
 # Verifies server endpoints and data format
 

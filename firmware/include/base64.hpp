@@ -1,4 +1,10 @@
 /**
+ * CommuteCompute™ - Smart Transit Display for Australian Public Transport
+ * Copyright © 2025-2026 Angus Bergman
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+/**
  * Base64 Decoder for Arduino/ESP32
  * Minimal implementation for decoding base64 BMP data
  */

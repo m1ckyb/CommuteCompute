@@ -1,4 +1,10 @@
 /**
+ * CommuteCompute™ - Smart Transit Display for Australian Public Transport
+ * Copyright © 2025-2026 Angus Bergman
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+/**
  * TRMNL BYOS Firmware for PTV-TRMNL
  * ESP32-based firmware for TRMNL OG devices
  *

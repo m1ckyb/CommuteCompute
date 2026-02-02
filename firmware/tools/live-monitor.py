@@ -1,4 +1,17 @@
 #!/usr/bin/env python3
+
+"""
+CommuteCompute™
+Smart Transit Display for Australian Public Transport
+
+Copyright © 2025-2026 Angus Bergman
+
+This file is part of CommuteCompute, licensed under AGPL-3.0-or-later.
+See LICENCE file for details.
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+"""
+
 """
 PTV-TRMNL Live Serial Monitor
 Continuously displays serial output from the device
