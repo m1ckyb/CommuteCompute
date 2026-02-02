@@ -64,3 +64,34 @@
 
 ### Purpose
 Defines project scope and intellectual property per Angus Bergman's instruction.
+
+## DEVELOPMENT-RULES.md Consolidation (2026-02-02 00:55 UTC)
+
+### Section Merge: 4 + 24 → 4 (Consolidated)
+
+**Reason:** 93% content overlap detected between:
+- Section 4: System Architecture Rules (original)
+- Section 24: System Architecture Principles (added v1.14)
+
+### Merged Content (No Information Lost)
+| New Subsection | Source | Content |
+|----------------|--------|--------|
+| 4.1 Core Principles | 24.1 | Core architecture principles table |
+| 4.2 Distribution Model | 24.2 | Enhanced self-hosted distribution diagram |
+| 4.3 Layer Architecture | 24.3 | NEW - Presentation/API/Service/Core/Data layers |
+| 4.4 Data Flow Requirements | 24.4 | Enhanced data flow diagram |
+| 4.5 Caching Strategy | 24.5 | NEW - Cache TTL specifications |
+| 4.6 Vercel KV Storage | 24.6 | NEW - Complete KV architecture |
+| 4.7 Security Model | 24.7 | NEW - Zero-config security, XSS protection |
+| 4.8 Free-Tier Architecture | 24.8 | NEW - Free-tier compliance |
+| 4.9 Multi-Device Support | 24.9 | NEW - CC LiveDash device specs |
+| 4.10 Required API Endpoints | 24.10 | Enhanced from 4.5 |
+| 4.11 Technology Stack | 24.11 | NEW - Locked stack requirements |
+
+### Removed (Redundant)
+- Section 24 header and all subsections (now in Section 4)
+- ~67 lines of duplicate content
+
+### Document Stats
+- Before: 4001 lines, 33 level-2 sections
+- After: ~3934 lines, 32 level-2 sections
