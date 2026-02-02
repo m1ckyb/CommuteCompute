@@ -20,6 +20,7 @@ COMMIT=911a5ca
 # - Memory-safe zone processing
 # - Exponential backoff on errors
 
+FIRMWARE_NAME=ccfirm-trmnl
 COMPATIBLE_DEVICES=TRMNL_OG,TRMNL_MINI
 DEFAULT_SERVER=https://your-server.vercel.app
 LOCKED=true

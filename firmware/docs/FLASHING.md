@@ -521,7 +521,7 @@ pio device monitor --raw
 ### platformio.ini Full Example
 
 ```ini
-[env:trmnl]
+[env:ccfirm-trmnl]
 platform = espressif32@6.12.0
 board = esp32-c3-devkitc-02
 framework = arduino
