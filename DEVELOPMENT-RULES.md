@@ -1313,7 +1313,7 @@ pio device monitor -b 115200
 #### 5.6.4 Required platformio.ini Flags
 
 ```ini
-[env:ccfirm-trmnl]
+[env:ccfirm-trmnl-7.1.0]
 platform = espressif32
 board = esp32-c3-devkitm-1
 framework = arduino
