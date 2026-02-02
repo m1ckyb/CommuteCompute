@@ -8,6 +8,13 @@
 
 import { setPreferences, setTransitApiKey, setUserState } from '../../src/data/kv-preferences.js';
 
+// SECURITY: Require admin authentication
+const adminAuth = (req, res) => {
+  const pw = req.headers["x-admin-password"] || req.query?.password;
+  if (!process.env.ADMIN_PASSWORD) return res.status(503).json({error: "Admin disabled"});
+  if (!pw || pw !== process.env.ADMIN_PASSWORD) return res.status(401).json({error: "Unauthorized"});
+  return null;
+};
 export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
