@@ -32,7 +32,7 @@
 - 🧠 **SmartCommute™ Engine** — Auto-detects optimal routes across Australia
 - 📱 **CC LiveDash™ Multi-Device** — Renders for TRMNL, Kindle, Inkplate, and web preview
 - 🌤️ **Weather Integration** — BOM weather data at a glance
-- 🖥️ **E-Ink Optimized** — 1-bit BMP rendering with 20-second partial refresh
+- 🖥️ **E-Ink Optimized** — 1-bit BMP rendering with 60-second partial refresh
 - 🔒 **100% Self-Hosted** — Your data, your server, your API keys
 - 🆓 **Free to Deploy** — Runs entirely on Vercel free tier (zero runtime API costs)
 - 🚫 **No TRMNL Cloud** — CCFirm™ custom firmware, zero external dependencies
@@ -70,6 +70,101 @@ Commute Compute uses a **fully self-hosted distribution model** — each user de
 - **Zero-config deployment** — API keys configured via Setup Wizard, embedded in URL tokens
 - **No TRMNL cloud** — CCFirm™ custom firmware connects only to YOUR server
 - **Free-tier first** — All features work without paid APIs (OSM fallback for geocoding)
+
+---
+
+
+## 📁 Directory Structure
+
+```
+CommuteCompute/
+├── api/                      # Vercel serverless functions
+│   ├── admin/                # Admin panel endpoints
+│   ├── device/               # Device-specific endpoints  
+│   ├── pair/                 # Device pairing (Vercel KV)
+│   └── zone/                 # Zone-based partial refresh
+├── docs/                     # Documentation
+│   ├── api/                  # API documentation
+│   ├── guides/               # User guides
+│   ├── hardware/             # Hardware docs
+│   └── setup/                # Setup documentation
+├── firmware/                 # CCFirm™ custom firmware
+│   ├── src/                  # Firmware source (C++)
+│   ├── include/              # Header files
+│   ├── kindle/               # Kindle integration
+│   └── variants/             # Device-specific configs
+├── public/                   # Static web assets
+│   ├── admin/                # Admin panel
+│   ├── assets/               # Icons, images, brand
+│   └── flasher/              # Web-based firmware flasher
+├── specs/                    # Design specifications
+│   └── CCDashDesignV12.md    # 🔒 LOCKED dashboard spec
+├── src/                      # Server-side source
+│   ├── services/             # Core services (opendata, weather)
+│   ├── engines/              # SmartCommute™ engine
+│   ├── core/                 # Dashboard rendering
+│   └── utils/                # Shared utilities
+├── tests/                    # Test suites
+├── tools/                    # Development tools
+├── DEVELOPMENT-RULES.md      # 🚨 MANDATORY development rules
+├── LICENCE                   # Dual-license (AGPL v3 + Commercial)
+└── README.md                 # This file
+```
+
+---
+
+## 🔄 Data Flow
+
+Commute Compute uses a layered architecture with clear separation of concerns:
+
+```
+                         ┌───────────────────────────────────────────────┐
+                         │               DATA SOURCES                   │
+                         └───────────────────────────────────────────────┘
+                                            │
+Transport Victoria  ──── 30s cache ────▶ opendata.js
+OpenData API                                 │
+                                             │
+BOM Weather API ─────── 5min cache ───▶ weather-bom.js
+                                             │
+                                             ▼
+                         ┌───────────────────────────────────────────────┐
+                         │          SMARTCOMMUTE™ ENGINE               │
+                         │                                              │
+                         │  Journey Planning • Coffee Decision • Routes  │
+                         └───────────────────────────────────────────────┘
+                                            │
+              ┌─────────────────────────────────┼─────────────┐
+              │                              │             │
+              ▼                              ▼             ▼
+     ┌──────────────────┐      ┌──────────────────┐   ┌──────────────────┐
+     │  CCDash V12      │      │  Full Screen     │   │  Zone Partial   │
+     │  Journey Renderer │      │  Dashboard       │   │  Renderer       │
+     └──────────────────┘      └──────────────────┘   └──────────────────┘
+              │                              │             │
+              ▼                              ▼             ▼
+     ┌──────────────────┐      ┌──────────────────┐   ┌──────────────────┐
+     │  1-bit BMP       │      │  Full PNG        │   │  Zone JSON      │
+     │  (firmware)       │      │  (preview/web)   │   │  (partial)      │
+     └──────────────────┘      └──────────────────┘   └──────────────────┘
+              │                              │             │
+              ▼                              ▼             ▼
+         TRMNL Device              Web Preview        TRMNL Zones
+```
+
+### Architecture Boundaries
+
+| Layer | Responsibility | Never Does |
+|-------|---------------|------------|
+| **Firmware** | Display rendering, zone refresh | Process journey logic |
+| **Server API** | Journey calculation, data fetch | Store user data centrally |
+| **Renderers** | BMP/PNG generation, zone diffing | Make external API calls |
+| **Services** | OpenData, Weather, Places | Cache beyond specified TTL |
+
+**Cache TTLs:**
+- Real-time departures: 30 seconds
+- Weather data: 5 minutes
+- Static GTFS: 24 hours
 
 ---
 
@@ -234,7 +329,7 @@ See [DEVELOPMENT-RULES.md Section 5](DEVELOPMENT-RULES.md#-section-5-custom-firm
 
 ---
 
-## 🎨 CCDash™ V11 Dashboard Layout
+## 🎨 CCDash™ V12 Dashboard Layout
 
 The dashboard displays your complete journey at a glance:
 
@@ -378,11 +473,11 @@ pio device monitor         # Serial monitor
 **⚠️ MANDATORY:** Read [DEVELOPMENT-RULES.md](DEVELOPMENT-RULES.md) first.
 
 Key rules:
-- CCDash™ CCDashDesignV10 spec is **LOCKED** — no changes without approval
+- CCDash™ CCDashDesignV12 spec is **LOCKED** — no changes without approval
 - Never use "PTV API" — use "Transport Victoria OpenData API"
 - CCFirm™ custom firmware only — NO usetrmnl.com dependencies
 - 1-bit BMP rendering — no grayscale
-- 20-second refresh — hardcoded, do not change
+- 60-second refresh — hardcoded, do not change
 - AGPL v3 licence — required on all files
 - No `allocBuffer()` in firmware (ESP32-C3 incompatibility)
 - `FONT_8x8` only (rotation bug with other fonts)
