@@ -45,3 +45,22 @@
 - DEVELOPMENT-RULES.md Section 3.1 (Zero-Config)
 - DEVELOPMENT-RULES.md Section 4.1-4.5 (Architecture)
 - DEVELOPMENT-RULES.md Section 19 (60s Refresh)
+
+## Project Statement Addition (2026-02-02 00:45 UTC)
+
+### Project Statement (IP Scope Definition)
+> **The FIRST travel planner that intelligently factors in your LIFESTYLE to your journey; Commute Compute does all of the thinking for you.**
+
+### Files Updated
+| File | Location | Change |
+|------|----------|--------|
+| `docs/PROJECT-VISION.md` | Line 11 | Added Project Statement section (v2.1) |
+| `README.md` | Line 10 | Added blockquote project statement |
+| `public/index.html` | Setup view | Added italic tagline |
+| `public/setup-wizard.html` | Welcome section | Added italic tagline |
+| `public/admin.html` | Welcome + About sections | Added tagline in green/purple |
+| `public/help.html` | Page header | Added italic tagline |
+| All HTML files | Meta description | Updated to project statement |
+
+### Purpose
+Defines project scope and intellectual property per Angus Bergman's instruction.

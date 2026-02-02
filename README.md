@@ -11,6 +11,8 @@
 
 # Commute Compute System™
 
+> **The FIRST travel planner that intelligently factors in your LIFESTYLE to your journey; Commute Compute does all of the thinking for you.**
+
 
 ### Smart Transit Display for Australian Public Transport
 

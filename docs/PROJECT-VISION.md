@@ -1,17 +1,23 @@
 # Commute Compute System™ — Project Vision & Roadmap
 
-**Version:** 2.0  
-**Last Updated:** 2026-01-30  
+**Version:** 2.1  
+**Last Updated:** 2026-02-02  
 **Author:** Angus Bergman  
 **License:** AGPL v3
+
+---
+
+## Project Statement
+
+> **The FIRST travel planner that intelligently factors in your LIFESTYLE to your journey; Commute Compute does all of the thinking for you.**
+
+This statement defines the scope and intellectual property of the Commute Compute System™ project.
 
 ---
 
 ## Vision Statement
 
 **Commute Compute System™ aims to be the definitive open-source smart transit display for Australian public transport** — empowering commuters with real-time journey information on beautiful e-ink displays, while maintaining complete privacy and user control.
-
----
 
 ## Core Values
 
