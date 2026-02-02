@@ -3,8 +3,9 @@
 </p>
 
 <p align="center">
-  <strong>The FIRST travel planner that intelligently factors in your LIFESTYLE to your journey; Commute Compute does all of the thinking for you.</strong>
+<strong>The FIRST travel planner that intelligently factors in your LIFESTYLE to your journey; Commute Compute does all of the thinking for you.</strong>
 </p>
+<p align="center">
   <strong>Metro Tunnel compatible — Ready for the new network</strong>
 </p>
 
