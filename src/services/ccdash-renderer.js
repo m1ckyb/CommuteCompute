@@ -296,13 +296,13 @@ let previousDataHash = {};
 let cachedBMPs = {};
 
 // =============================================================================
-// MODE ICON DRAWING FUNCTIONS (V10 Spec Section 5.3)
+// MODE ICON DRAWING FUNCTIONS (V12 Spec Section 5.3)
 // Canvas-drawn icons for 1-bit e-ink (no emojis, no anti-aliasing)
 // =============================================================================
 
 /**
  * Draw walk icon - person walking (32x32)
- * V10 Spec Section 5.3.1
+ * V12 Spec Section 5.3.1
  */
 function drawWalkIcon(ctx, x, y, size = 32) {
   const scale = size / 32;
@@ -353,7 +353,7 @@ function drawWalkIcon(ctx, x, y, size = 32) {
 
 /**
  * Draw train icon (32x32)
- * V10 Spec Section 5.3.2
+ * V12 Spec Section 5.3.2
  */
 function drawTrainIcon(ctx, x, y, size = 32) {
   const scale = size / 32;
@@ -392,7 +392,7 @@ function drawTrainIcon(ctx, x, y, size = 32) {
 
 /**
  * Draw tram icon - Melbourne W-class style (32x32)
- * V10 Spec Section 5.3.3
+ * V12 Spec Section 5.3.3
  */
 function drawTramIcon(ctx, x, y, size = 32) {
   const scale = size / 32;
@@ -447,7 +447,7 @@ function drawTramIcon(ctx, x, y, size = 32) {
 
 /**
  * Draw bus icon (32x32)
- * V10 Spec Section 5.3.4
+ * V12 Spec Section 5.3.4
  */
 function drawBusIcon(ctx, x, y, size = 32) {
   const scale = size / 32;
@@ -491,7 +491,7 @@ function drawBusIcon(ctx, x, y, size = 32) {
 
 /**
  * Draw coffee icon (32x32) WITH STEAM LINES
- * V10 Spec Section 5.3.5 - Per reference image 2
+ * V12 Spec Section 5.3.5 - Per reference image 2
  */
 function drawCoffeeIcon(ctx, x, y, size = 32) {
   const scale = size / 32;
@@ -750,7 +750,7 @@ function drawModeIcon(ctx, type, x, y, size = 32, outline = false) {
 }
 
 /**
- * Draw leg number circle (V10 Spec Section 5.2)
+ * Draw leg number circle (V12 Spec Section 5.2)
  * Per design reference images:
  * - Normal: Filled black circle with white number
  * - Skipped/Coffee-skip: Dashed circle outline with black number inside
@@ -890,7 +890,7 @@ function getDynamicLegZone(legIndex, totalLegs) {
 }
 
 /**
- * Render a journey leg zone (V10 Spec Section 5)
+ * Render a journey leg zone (V12 Spec Section 5)
  * Includes: leg number, mode icon, title, subtitle, duration box
  * v1.20: Dynamic scaling based on leg height
  */
@@ -906,7 +906,7 @@ function renderLegZone(ctx, leg, zone, legNumber = 1, isHighlighted = false) {
   const iconSize = Math.max(20, Math.round(32 * scale));
   const numberSize = Math.max(16, Math.round(24 * scale));
   
-  // Determine border style based on status (V10 Spec Section 5.1)
+  // Determine border style based on status (V12 Spec Section 5.1)
   let borderWidth = 2;
   let borderDash = [];
   
@@ -938,13 +938,13 @@ function renderLegZone(ctx, leg, zone, legNumber = 1, isHighlighted = false) {
     ctx.setLineDash([]);
   }
   
-  // Leg number circle (V10 Spec Section 5.2) - scaled
+  // Leg number circle (V12 Spec Section 5.2) - scaled
   // v1.21: Fixed positioning - consistent spacing
   const numberX = x + 6;
   const numberY = y + (h - numberSize) / 2;
   drawLegNumber(ctx, legNumber, numberX, numberY, status, numberSize);
   
-  // Mode icon (V10 Spec Section 5.3) - scaled
+  // Mode icon (V12 Spec Section 5.3) - scaled
   // v1.21: Icon starts right after number with 4px gap
   const iconX = numberX + numberSize + 4;
   const iconY = y + (h - iconSize) / 2;
@@ -967,7 +967,7 @@ function renderLegZone(ctx, leg, zone, legNumber = 1, isHighlighted = false) {
   const titleY = y + Math.round(textAreaHeight * 0.15);
   const subtitleY = y + Math.round(textAreaHeight * 0.55);
   
-  // Title with status prefix (V10 Spec Section 5.4)
+  // Title with status prefix (V12 Spec Section 5.4)
   // v1.23: Removed emoji prefixes - they render as artifacts on e-ink
   // Status is already indicated by border style and we have proper icons
   ctx.font = `bold ${titleSize}px Inter, sans-serif`;
@@ -980,7 +980,7 @@ function renderLegZone(ctx, leg, zone, legNumber = 1, isHighlighted = false) {
   const timeBoxW = Math.max(56, Math.round(72 * scale));
   const timeBoxX = w - timeBoxW;
   
-  // Subtitle (V10 Spec Section 5.5)
+  // Subtitle (V12 Spec Section 5.5)
   // Calculate max width to prevent overlap with DEPART column and time box
   const hasDepart = ['train', 'tram', 'bus', 'vline', 'ferry'].includes(leg.type) && leg.departTime;
   const departColW = hasDepart ? 55 : 0;  // v1.20: narrower DEPART column
@@ -1013,7 +1013,7 @@ function renderLegZone(ctx, leg, zone, legNumber = 1, isHighlighted = false) {
     ctx.textAlign = 'left';
   }
   
-  // Time box (right side, fills to edge) - V10 Spec Section 5.6
+  // Time box (right side, fills to edge) - V12 Spec Section 5.6
   // v1.20: timeBoxW and timeBoxX already defined above for DEPART positioning
   const timeBoxH = h;
   const timeBoxY = y;
@@ -1128,7 +1128,7 @@ function getLegTitle(leg) {
 }
 
 /**
- * Generate leg subtitle from leg data (V10 Spec Section 5.5)
+ * Generate leg subtitle from leg data (V12 Spec Section 5.5)
  */
 function getLegSubtitle(leg) {
   const status = leg.status || 'normal';
@@ -1301,7 +1301,7 @@ function renderHeaderDayDate(data, prefs) {
 }
 
 /**
- * Render weather zone (V10 Spec Section 2.6 & 2.7)
+ * Render weather zone (V12 Spec Section 2.6 & 2.7)
  * Includes temperature, condition, and umbrella indicator
  */
 function renderHeaderWeather(data, prefs) {
@@ -1312,7 +1312,7 @@ function renderHeaderWeather(data, prefs) {
   ctx.fillStyle = '#FFF';
   ctx.fillRect(0, 0, zone.w, zone.h);
   
-  // Weather box border (V10 Spec Section 2.6)
+  // Weather box border (V12 Spec Section 2.6)
   // v1.26: Better spacing for temp and condition
   ctx.strokeStyle = '#000';
   ctx.lineWidth = 2;
@@ -1336,7 +1336,7 @@ function renderHeaderWeather(data, prefs) {
   }
   ctx.fillText(condition, zone.w / 2, 42);
   
-  // Umbrella indicator (V10 Spec Section 2.7)
+  // Umbrella indicator (V12 Spec Section 2.7)
   // Position: below weather box, 132×18px
   const umbrellaY = 66;
   const umbrellaH = 18;
@@ -1373,7 +1373,7 @@ function renderHeaderWeather(data, prefs) {
 }
 
 /**
- * Render status bar zone (V10 Spec Section 4)
+ * Render status bar zone (V12 Spec Section 4)
  * Left: Status message (LEAVE NOW / DELAY / DISRUPTION)
  * Right: Total journey time
  */
@@ -1389,7 +1389,7 @@ function renderStatus(data, prefs) {
   ctx.fillStyle = '#FFF';
   ctx.textBaseline = 'middle';
   
-  // Determine status type and message (V10 Spec Section 4.1)
+  // Determine status type and message (V12 Spec Section 4.1)
   let statusText = '';
   const arriveBy = data.arrive_by || data.arrivalTime || '--:--';
   const leaveIn = data.leave_in || data.leaveIn;
@@ -1416,7 +1416,7 @@ function renderStatus(data, prefs) {
   ctx.font = 'bold 13px Inter, sans-serif';
   ctx.fillText(statusText, 16, zone.h / 2);
   
-  // Right text - Total journey time (V10 Spec Section 4.2)
+  // Right text - Total journey time (V12 Spec Section 4.2)
   const totalMinutes = data.total_minutes || data.totalMinutes || data.journeyDuration;
   if (totalMinutes) {
     ctx.textAlign = 'right';
@@ -1630,7 +1630,7 @@ function _renderFullScreenCanvas(data, prefs = {}) {
   
   // Re-render zones directly to main canvas for preview
   // =========================================================================
-  // HEADER (V10 Spec Section 2) - v1.31: Clock at bottom, coffee indicator
+  // HEADER (V12 Spec Section 2) - v1.31: Clock at bottom, coffee indicator
   // =========================================================================
   ctx.fillStyle = '#000';
   ctx.textBaseline = 'top';
@@ -1890,7 +1890,7 @@ function _renderFullScreenCanvas(data, prefs = {}) {
   ctx.fillRect(0, 94, 800, 2);
   
   // =========================================================================
-  // STATUS BAR (V10 Spec Section 4) - Real-Time Arrival Amendment 2026-01-31
+  // STATUS BAR (V12 Spec Section 4) - Real-Time Arrival Amendment 2026-01-31
   // =========================================================================
   
   // Calculate real-time arrival: current time + total journey duration
@@ -2011,7 +2011,7 @@ function _renderFullScreenCanvas(data, prefs = {}) {
   
   // =========================================================================
   // =========================================================================
-  // JOURNEY LEGS (V10 Spec Section 5) - Per Reference Design Images
+  // JOURNEY LEGS (V12 Spec Section 5) - Per Reference Design Images
   // v1.29: Improved scaling, spacing, and time display
   // =========================================================================
   const legs = data.journey_legs || data.legs || [];
@@ -2193,7 +2193,7 @@ function _renderFullScreenCanvas(data, prefs = {}) {
     ctx.setLineDash([]);
     
     // -----------------------------------------------------------------------
-    // LEG NUMBER CIRCLE (V10 Spec Section 5.2)
+    // LEG NUMBER CIRCLE (V12 Spec Section 5.2)
     // - Normal: Filled black circle with white number
     // - Skipped: Dashed circle outline with black number
     // - Suspended: Dashed circle with X (per ref image 6)
@@ -2206,7 +2206,7 @@ function _renderFullScreenCanvas(data, prefs = {}) {
     }
     
     // -----------------------------------------------------------------------
-    // MODE ICON (V10 Spec Section 5.3) - v1.27: scaled
+    // MODE ICON (V12 Spec Section 5.3) - v1.27: scaled
     // - Normal: Filled solid icons
     // - Delayed/Skipped/Suspended/Diverted: Outline icons
     // -----------------------------------------------------------------------
@@ -2215,7 +2215,7 @@ function _renderFullScreenCanvas(data, prefs = {}) {
     drawModeIcon(ctx, leg.type, iconX, zone.y + (zone.h - iconSize) / 2, iconSize, useOutlineIcon);
     
     // -----------------------------------------------------------------------
-    // TITLE (V10 Spec Section 5.4) - v1.30: title/subtitle closer together
+    // TITLE (V12 Spec Section 5.4) - v1.30: title/subtitle closer together
     // -----------------------------------------------------------------------
     ctx.fillStyle = '#000';
     ctx.font = `bold ${titleSize}px Inter, sans-serif`;
@@ -2234,7 +2234,7 @@ function _renderFullScreenCanvas(data, prefs = {}) {
     ctx.fillText(legTitle, textX, titleY);
     
     // -----------------------------------------------------------------------
-    // SUBTITLE (V10 Spec Section 5.5) - v1.27: scaled
+    // SUBTITLE (V12 Spec Section 5.5) - v1.27: scaled
     // -----------------------------------------------------------------------
     ctx.font = `${subtitleSize}px Inter, sans-serif`;
     let legSubtitle = leg.subtitle;
@@ -2308,7 +2308,7 @@ function _renderFullScreenCanvas(data, prefs = {}) {
     }
     
     // -----------------------------------------------------------------------
-    // TIME BOX (V10 Spec Section 5.6) - Per reference images
+    // TIME BOX (V12 Spec Section 5.6) - Per reference images
     // v1.29: Walk legs show DURATION, transit legs show CUMULATIVE time
     // -----------------------------------------------------------------------
     const timeBoxX = zone.x + zone.w - timeBoxW;
@@ -2411,7 +2411,7 @@ function _renderFullScreenCanvas(data, prefs = {}) {
   data._delayedLegCount = delayedLegs.length;
   
   // =========================================================================
-  // FOOTER (V10 Spec Section 6) - Per reference images
+  // FOOTER (V12 Spec Section 6) - Per reference images
   // Ref format: "80 COLLINS ST, MELBOURNE" ... "ARRIVE" ... "9:18"
   // Or for home destination: "HOME — 1 CLARA ST" (per ref images 5, 8)
   // =========================================================================
@@ -2539,7 +2539,8 @@ export function renderFullDashboard(data) {
   return renderFullScreen(data);
 }
 
-export { ZONES as ZONES_V10 };
+export { ZONES as ZONES_V12 };
+export { ZONES as ZONES_V10 }; // Backward compatibility alias
 
 // =============================================================================
 // EXPORTS
