@@ -336,7 +336,7 @@ See [DEVELOPMENT-RULES.md Section 5](DEVELOPMENT-RULES.md#-section-5-custom-firm
 
 ---
 
-## 🎨 CCDash™ V12 Dashboard Layout
+## 🔒 Securitynn**After deploying, you MUST configure admin authentication:**nn1. Go to Vercel Dashboard → Your Project → Settings → Environment Variablesn2. Add `ADMIN_PASSWORD` with a strong password (generate with `openssl rand -base64 24`)n3. Redeploy for changes to take effectnn**Security features:**n- All `/api/admin/*` endpoints require authenticationn- Fail-secure: admin panel disabled if password not configuredn- API keys stored in Vercel KV, never in source coden- XSS sanitization on all user inputnnSee [DEVELOPMENT-RULES.md](DEVELOPMENT-RULES.md) Section 17 for full security requirements.nn---nn## 🎨 CCDash™ V12 Dashboard Layout
 
 The dashboard displays your complete journey at a glance:
 

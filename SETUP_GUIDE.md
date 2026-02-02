@@ -35,7 +35,7 @@
 
 ---
 
-## Quick Start (5 Minutes)
+## 🔒 Security Setup (REQUIRED)nn**Before using your deployment, you MUST secure the admin panel:**nn1. Go to your hosting dashboard (Vercel/Render) → Environment Variablesn2. Add: `ADMIN_PASSWORD` = `[generate with: openssl rand -base64 24]`n3. Redeploynn**Why?** The admin panel allows configuring API keys and journey settings. Without authentication, anyone could modify your configuration.nn---nn## Quick Start (5 Minutes)
 
 ### 1. Fork This Repository
 

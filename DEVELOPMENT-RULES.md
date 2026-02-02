@@ -3921,3 +3921,76 @@ curl -s ... | head -c 1  # Should be "{" not "<"
 ---
 
 *This document is the single source of truth for Commute Compute development. All contributors must read and comply with these rules.*
+
+### 17.5 Admin Panel Authentication (MANDATORY)
+
+**🔴 CRITICAL**: All `/api/admin/*` endpoints MUST require authentication. Unauthenticated admin panels are a security vulnerability.
+
+#### 17.5.1 Authentication Requirements
+
+| Requirement | Implementation | Status |
+|-------------|----------------|--------|
+| Password protection | `ADMIN_PASSWORD` environment variable | MANDATORY |
+| Fail-secure | Block access if password not configured | MANDATORY |
+| No hardcoded passwords | Password only in environment variables | MANDATORY |
+| Rate limiting | Log failed attempts, consider blocking | RECOMMENDED |
+
+#### 17.5.2 Implementation Pattern
+
+```javascript
+// api/admin/*.js - MANDATORY auth check
+const adminAuth = (req, res) => {
+  const pw = req.headers['x-admin-password'] || req.query?.password;
+  if (!process.env.ADMIN_PASSWORD) {
+    return res.status(503).json({ error: 'Admin disabled' });
+  }
+  if (!pw || pw !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  return null;
+};
+
+export default async function handler(req, res) {
+  const authError = adminAuth(req, res);
+  if (authError) return; // Auth failed, response already sent
+  
+  // ... rest of handler
+}
+```
+
+#### 17.5.3 Deployment Requirements
+
+**After deploying CommuteCompute, you MUST:**
+
+1. Set `ADMIN_PASSWORD` in Vercel Environment Variables
+2. Use a strong password (minimum 24 characters recommended)
+3. Generate with: `openssl rand -base64 24`
+
+#### 17.5.4 Accessing Protected Admin Panel
+
+```bash
+# Via header (recommended)
+curl -H "X-Admin-Password: YOUR_PASSWORD" https://your-app.vercel.app/api/admin/preferences
+
+# Via query parameter (less secure, may appear in logs)
+curl "https://your-app.vercel.app/api/admin/preferences?password=YOUR_PASSWORD"
+```
+
+#### 17.5.5 Prohibited Patterns
+
+- ❌ Admin endpoints without authentication
+- ❌ Hardcoded admin passwords in source code
+- ❌ Returning raw API keys to frontend (use masked versions)
+- ❌ Storing passwords in git history
+- ❌ Using weak or default passwords
+
+#### 17.5.6 Security Headers
+
+All admin responses MUST include:
+
+```javascript
+res.setHeader('X-Content-Type-Options', 'nosniff');
+res.setHeader('X-Frame-Options', 'DENY');
+res.setHeader('Cache-Control', 'no-store');
+```
+

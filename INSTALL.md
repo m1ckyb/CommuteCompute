@@ -193,6 +193,7 @@ Environment variables provide **the most secure way** to store API keys on Rende
 
 ### 4.2 How to Add Environment Variables
 
+> **⚠️ SECURITY REQUIREMENT:** You MUST set `ADMIN_PASSWORD` to protect your admin panel.n> Generate a strong password: `openssl rand -base64 24`n
 1. In Render dashboard, go to your service
 2. Click **Environment** in the left sidebar
 3. Click **Add Environment Variable**
