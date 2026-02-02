@@ -43,3 +43,11 @@ firmware/*.elf
 .pio/
 .pioenvs/
 .piolibdeps/
+
+# Security additions
+*.pem
+*.key
+*.p12
+secrets/
+credentials/
+private/
