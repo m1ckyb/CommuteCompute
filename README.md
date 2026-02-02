@@ -3,6 +3,8 @@
 </p>
 
 <p align="center">
+  <strong>The FIRST travel planner that intelligently factors in your LIFESTYLE to your journey; Commute Compute does all of the thinking for you.</strong>
+</p>
   <strong>Metro Tunnel compatible — Ready for the new network</strong>
 </p>
 
@@ -20,6 +22,8 @@
 ![States](https://img.shields.io/badge/states-VIC%20%7C%20NSW%20%7C%20QLD-yellow)
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/angusbergman17-cpu/CommuteCompute)
 
+> Commute Compute is the smart algorithm that does all of the thinking for you - the first travel planner that intelligently factors in your LIFESTYLE to you journey.
+>
 > Your personal e-ink transit dashboard. Real-time departures, smart journey planning, and the all-important coffee decision — rendered server-side and delivered to your display.
 > First public release - development and bug fixes ongoing.
 ---
